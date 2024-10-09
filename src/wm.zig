@@ -1,5 +1,6 @@
 const std = @import("std");
 const c = @import("c.zig");
+const log = std.log.scoped(.wm);
 
 const Layout = @import("layout.zig").Layout;
 
@@ -25,13 +26,11 @@ pub const WM = struct {
 
         wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
 
-        // _ = c.XSelectInput(@constCast(wm.x_display), wm.x_root, c.SubstructureRedirectMask);
-
         return wm;
     }
 
     pub fn run(self: *Self) !void {
-        // std.debug.print("Through the darkness of future past, the magician longs to see. One chants out between two worlds.\nFire, walk with me.\n", .{});
+        log.info("Through the darkness of future past, the magician longs to see. One chants out between two worlds.\nFire, walk with me.\n", .{});
 
         _ = c.XSetErrorHandler(Self.onError);
         _ = c.XSelectInput(@constCast(self.x_display), self.x_root, c.SubstructureRedirectMask | c.SubstructureNotifyMask);
@@ -43,12 +42,12 @@ pub const WM = struct {
             var event: c.XEvent = undefined;
             _ = c.XNextEvent(@constCast(self.x_display), &event);
 
-            // std.debug.print("{}\n", .{event.type});
+            // log.debug("got XEvent: {}", .{event.type});
             switch (event.type) {
                 c.CreateNotify => try self.layout.onCreateNotify(&event.xcreatewindow),
                 c.MapRequest => try self.layout.onMapRequest(&event.xmaprequest),
-                // c.UnmapNotify => self.layout.onUnmapNotify(&event.xunmap),
-                // c.DestroyNotify => try self.layout.onDestroyNotify(&event.xdestroywindow),
+                c.UnmapNotify => self.layout.onUnmapNotify(&event.xunmap),
+                c.DestroyNotify => self.layout.onDestroyNotify(&event.xdestroywindow),
                 c.KeyPress => try self.layout.onKeyPress(&event.xkey),
                 // c.ButtonPress => try self.layout.onButtonPress(@constCast(&event.xbutton)),
                 else => {},
@@ -59,7 +58,7 @@ pub const WM = struct {
     fn onError(_: ?*c.Display, event: [*c]c.XErrorEvent) callconv(.C) c_int {
         const e: *c.XErrorEvent = @ptrCast(event);
 
-        std.debug.print("error: {}\n", .{e.type});
+        log.err("got XErrorEvent: {}", .{e.type});
 
         // switch (e.type) {
         //     else => {},

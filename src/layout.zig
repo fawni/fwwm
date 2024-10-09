@@ -1,7 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig");
 
-// const WM = @import("wm.zig").WM;
+const log = std.log.scoped(.layout);
 
 const Child = struct {
     window: c.Window,
@@ -24,10 +24,10 @@ pub const Layout = struct {
     screen_height: c_uint,
 
     children: std.DoublyLinkedList(Child),
-    active_node: ?*std.DoublyLinkedList(Child).Node,
+    active_node: ?*std.DoublyLinkedList(Child).Node = null,
 
-    normal_color: u32,
-    focus_color: u32,
+    normal_color: u32 = 0x909090,
+    focus_color: u32 = 0xd895ee,
     // previously_active_node: Child,
 
     // current_ws: u32,
@@ -48,6 +48,9 @@ pub const Layout = struct {
         layout.children = std.DoublyLinkedList(Child){};
         layout.active_node = null;
 
+        layout.normal_color = 0x909090;
+        layout.focus_color = 0xd895ee;
+
         return layout;
     }
 
@@ -62,22 +65,46 @@ pub const Layout = struct {
     }
 
     pub fn onMapRequest(self: *Self, event: *const c.XMapRequestEvent) !void {
-        // std.debug.print("=== HOLY SHIT HELLO????", .{});
-
+        log.debug("mapping a node", .{});
         _ = c.XSetInputFocus(@constCast(self.x_display), event.window, c.RevertToParent, c.CurrentTime);
         _ = c.XMapWindow(@constCast(self.x_display), event.window);
         _ = c.XSetWindowBorderWidth(@constCast(self.x_display), event.window, 2);
-        _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, 0xff0000);
+        _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
 
         const node = try self.addChild(event.window);
         self.focus(node);
     }
 
-    // pub fn onUnmapNotify(self: *Self, event: *const c.XUnmapEvent) void {}
-    // pub fn onDestroyNotify(self: *Self, event: *const c.XDestroyWindowEvent) !void {}
-    //
+    pub fn onUnmapNotify(self: *Self, event: *const c.XUnmapEvent) void {
+        log.debug("a node was unmapped", .{});
+        if (self.windowToNode(event.window)) |node| {
+            self.children.remove(node);
+        }
+
+        if (self.active_node) |node| {
+            self.active_node = node.prev;
+        } else {
+            self.active_node = self.children.first;
+        }
+        self.focus(self.active_node);
+    }
+    pub fn onDestroyNotify(self: *Self, event: *const c.XDestroyWindowEvent) void {
+        log.debug("a node was destroyed", .{});
+        if (self.windowToNode(event.window)) |node| {
+            self.children.remove(node);
+        }
+
+        if (self.active_node) |node| {
+            self.active_node = node.prev;
+        } else {
+            self.active_node = self.children.first;
+        }
+        self.focus(self.active_node);
+    }
 
     pub fn addChild(self: *Self, window: c.Window) !*std.DoublyLinkedList(Child).Node {
+        log.debug("adding child to managed children", .{});
+
         var attributes: c.XWindowAttributes = undefined;
         _ = c.XGetWindowAttributes(@constCast(self.x_display), window, &attributes);
 
@@ -93,8 +120,6 @@ pub const Layout = struct {
 
         node.data = child;
         self.children.append(node);
-
-        std.debug.print("hello child\n", .{});
 
         return node;
     }
@@ -117,5 +142,13 @@ pub const Layout = struct {
         _ = c.XSetWindowBorder(@constCast(self.x_display), target.data.window, self.focus_color);
 
         self.active_node = target;
+    }
+
+    fn windowToNode(self: *Self, window: c.Window) ?*std.DoublyLinkedList(Child).Node {
+        var next = self.children.first;
+        while (next) |node| : (next = node.next) {
+            if (node.data.window == window) return node;
+        }
+        return null;
     }
 };
