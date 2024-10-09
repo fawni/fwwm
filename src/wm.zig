@@ -30,7 +30,7 @@ pub const WM = struct {
     }
 
     pub fn run(self: *Self) !void {
-        log.info("Through the darkness of future past, the magician longs to see. One chants out between two worlds.\nFire, walk with me.\n", .{});
+        log.info("Through the darkness of future past, the magician longs to see. One chants out between two worlds.\nFire, walk with me.", .{});
 
         _ = c.XSetErrorHandler(Self.onError);
         _ = c.XSelectInput(@constCast(self.x_display), self.x_root, c.SubstructureRedirectMask | c.SubstructureNotifyMask);
@@ -44,12 +44,12 @@ pub const WM = struct {
 
             // log.debug("got XEvent: {}", .{event.type});
             switch (event.type) {
-                c.CreateNotify => try self.layout.onCreateNotify(&event.xcreatewindow),
                 c.MapRequest => try self.layout.onMapRequest(&event.xmaprequest),
                 c.UnmapNotify => self.layout.onUnmapNotify(&event.xunmap),
                 c.DestroyNotify => self.layout.onDestroyNotify(&event.xdestroywindow),
-                c.KeyPress => try self.layout.onKeyPress(&event.xkey),
                 // c.ButtonPress => try self.layout.onButtonPress(@constCast(&event.xbutton)),
+                // c.KeyPress => try self.layout.onKeyPress(&event.xkey),
+                // c.CreateNotify => try self.layout.onCreateNotify(&event.xcreatewindow),
                 else => {},
             }
         }

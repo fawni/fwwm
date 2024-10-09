@@ -28,9 +28,6 @@ pub const Layout = struct {
 
     normal_color: u32 = 0x909090,
     focus_color: u32 = 0xd895ee,
-    // previously_active_node: Child,
-
-    // current_ws: u32,
 
     pub fn init(allocator: *std.mem.Allocator, display: *const c.Display, root: c.Window) !Self {
         var layout: Self = undefined;
@@ -52,16 +49,6 @@ pub const Layout = struct {
         layout.focus_color = 0xd895ee;
 
         return layout;
-    }
-
-    pub fn onKeyPress(self: *Layout, event: *c.XKeyPressedEvent) !void {
-        _ = self;
-        _ = event;
-    }
-
-    pub fn onCreateNotify(self: *const Layout, event: *const c.XCreateWindowEvent) !void {
-        _ = self;
-        _ = event;
     }
 
     pub fn onMapRequest(self: *Self, event: *const c.XMapRequestEvent) !void {
@@ -88,6 +75,7 @@ pub const Layout = struct {
         }
         self.focus(self.active_node);
     }
+
     pub fn onDestroyNotify(self: *Self, event: *const c.XDestroyWindowEvent) void {
         log.debug("a node was destroyed", .{});
         if (self.windowToNode(event.window)) |node| {
@@ -101,6 +89,16 @@ pub const Layout = struct {
         }
         self.focus(self.active_node);
     }
+
+    // pub fn onKeyPress(self: *Layout, event: *c.XKeyPressedEvent) !void {
+    //     _ = self;
+    //     _ = event;
+    // }
+
+    // pub fn onCreateNotify(self: *const Layout, event: *const c.XCreateWindowEvent) !void {
+    //     _ = self;
+    //     _ = event;
+    // }
 
     pub fn addChild(self: *Self, window: c.Window) !*std.DoublyLinkedList(Child).Node {
         log.debug("adding child to managed children", .{});
