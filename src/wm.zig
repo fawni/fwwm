@@ -30,7 +30,7 @@ pub const WM = struct {
     }
 
     pub fn run(self: *Self) !void {
-        log.info("Through the darkness of future past, the magician longs to see. One chants out between two worlds.\nFire, walk with me.", .{});
+        log.info("Fire, walk with me.", .{});
 
         _ = c.XSetErrorHandler(Self.onError);
         _ = c.XSelectInput(@constCast(self.x_display), self.x_root, c.SubstructureRedirectMask | c.SubstructureNotifyMask);
