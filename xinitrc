@@ -1,5 +1,6 @@
 #!/bin/sh
 
-feh --bg-tile ~/Pictures/Backgrounds/1608844491522.png &
-alacritty &
+feh --bg-tile ./dots/bg.png &
+picom --config ./dots/picom/picom.conf &
+sxhkd -c ./dots/sxhkd/sxhkdrc &
 exec ./zig-out/bin/fwwm

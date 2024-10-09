@@ -1,7 +1,8 @@
 _default:
     @just --list
 
-build:
+@build:
+    zvm use 0.13.0   
     zig build
 
 # width := "800"
@@ -9,5 +10,5 @@ build:
 width := "1280"
 height := "720"
 
-dev: (build)
-    @startx ./xinitrc -- /usr/bin/Xephyr -ac -screen {{width}}x{{height}} -reset
+@dev: (build)
+    startx ./xinitrc -- /usr/bin/Xephyr -ac -screen {{width}}x{{height}} -reset

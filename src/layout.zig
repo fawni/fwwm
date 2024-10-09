@@ -71,7 +71,7 @@ pub const Layout = struct {
         if (self.active_node) |node| {
             self.active_node = node.prev;
         } else {
-            self.active_node = self.children.first;
+            self.active_node = self.children.last;
         }
         self.focus(self.active_node);
     }
@@ -85,7 +85,7 @@ pub const Layout = struct {
         if (self.active_node) |node| {
             self.active_node = node.prev;
         } else {
-            self.active_node = self.children.first;
+            self.active_node = self.children.last;
         }
         self.focus(self.active_node);
     }
@@ -128,8 +128,8 @@ pub const Layout = struct {
         if (self.active_node) |n| {
             _ = c.XSetWindowBorder(@constCast(self.x_display), n.data.window, self.normal_color);
         }
-        const target = node orelse self.children.first.?;
 
+        const target = node orelse self.children.last.?;
         _ = c.XSetInputFocus(
             @constCast(self.x_display),
             target.data.window,

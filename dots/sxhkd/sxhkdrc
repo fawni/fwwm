@@ -1,0 +1,11 @@
+ctrl + Return
+    alacritty
+ctrl + d
+    rofi -show drun
+ctrl + w
+    rofi -show window
+ctrl + {q,shift + q}
+    xdotool {windowclose,windowkill} $(xdotool getwindowfocus)
+
+ctrl + Escape
+    pkill -USR1 -x sxhkd
