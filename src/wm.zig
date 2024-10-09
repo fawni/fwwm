@@ -44,6 +44,7 @@ pub const WM = struct {
 
             // log.debug("got XEvent: {}", .{event.type});
             switch (event.type) {
+                c.ConfigureRequest => self.layout.onConfigureRequest(&event.xconfigurerequest),
                 c.MapRequest => try self.layout.onMapRequest(&event.xmaprequest),
                 c.UnmapNotify => self.layout.onUnmapNotify(&event.xunmap),
                 c.DestroyNotify => self.layout.onDestroyNotify(&event.xdestroywindow),

@@ -51,6 +51,23 @@ pub const Layout = struct {
         return layout;
     }
 
+    pub fn onConfigureRequest(self: *Self, event: *const c.XConfigureRequestEvent) void {
+        var changes: c.XWindowChanges = undefined;
+
+        changes.x = event.x;
+        changes.y = event.y;
+
+        changes.width = event.width;
+        changes.height = event.height;
+
+        changes.border_width = event.border_width;
+
+        changes.sibling = event.above;
+        changes.stack_mode = event.detail;
+
+        _ = c.XConfigureWindow(@constCast(self.x_display), event.window, @intCast(event.value_mask), &changes);
+    }
+
     pub fn onMapRequest(self: *Self, event: *const c.XMapRequestEvent) !void {
         log.debug("mapping a node", .{});
         _ = c.XSetInputFocus(@constCast(self.x_display), event.window, c.RevertToParent, c.CurrentTime);
