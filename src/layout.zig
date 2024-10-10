@@ -21,10 +21,11 @@ pub const Layout = struct {
     screen_height: c_uint,
 
     leaves: Leaves,
-    active_node: ?*Node = null,
+    active_node: ?*Node,
 
-    normal_color: u32 = 0x909090,
-    focus_color: u32 = 0xd895ee,
+    normal_color: u32,
+    hover_color: u32,
+    focus_color: u32,
 
     pub fn init(allocator: *std.mem.Allocator, display: *const c.Display, root: c.Window) !Self {
         var layout: Self = undefined;
@@ -43,6 +44,7 @@ pub const Layout = struct {
         layout.active_node = null;
 
         layout.normal_color = 0x909090;
+        layout.hover_color = 0xee95d2;
         layout.focus_color = 0xd895ee;
 
         return layout;
@@ -67,10 +69,13 @@ pub const Layout = struct {
 
     pub fn onMapRequest(self: *Self, event: *const c.XMapRequestEvent) !void {
         log.debug("mapping a node", .{});
+        _ = c.XSelectInput(@constCast(self.x_display), event.window, c.StructureNotifyMask | c.EnterWindowMask | c.LeaveWindowMask | c.FocusChangeMask);
+
         _ = c.XSetInputFocus(@constCast(self.x_display), event.window, c.RevertToParent, c.CurrentTime);
         _ = c.XMapWindow(@constCast(self.x_display), event.window);
-        _ = c.XSetWindowBorderWidth(@constCast(self.x_display), event.window, 2);
+
         _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
+        _ = c.XSetWindowBorderWidth(@constCast(self.x_display), event.window, 2);
 
         const node = try self.addNode(event.window);
         self.focus(node);
@@ -113,6 +118,22 @@ pub const Layout = struct {
         // ♡: https://github.com/c00kiemon5ter/monsterwm/issues/12#issuecomment-15343347
         _ = c.XAllowEvents(@constCast(self.x_display), c.ReplayPointer, c.CurrentTime);
         _ = c.XSync(@constCast(self.x_display), c.False);
+    }
+
+    pub fn onEnterNotify(self: *Layout, event: *c.XCrossingEvent) void {
+        log.debug("entered", .{});
+        const node = self.windowToNode(event.window);
+        if (node != self.active_node) {
+            _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.hover_color);
+        }
+    }
+
+    pub fn onLeaveNotify(self: *Layout, event: *c.XCrossingEvent) void {
+        log.debug("left", .{});
+        const node = self.windowToNode(event.window);
+        if (node != self.active_node) {
+            _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
+        }
     }
 
     // pub fn onKeyPress(self: *Layout, event: *c.XKeyPressedEvent) !void {
@@ -172,6 +193,7 @@ pub const Layout = struct {
         while (next) |node| : (next = node.next) {
             if (node.data.window == window) return node;
         }
+
         return null;
     }
 };
