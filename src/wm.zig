@@ -1,8 +1,10 @@
 const std = @import("std");
 const c = @import("c.zig");
+const atoms = @import("atoms.zig");
 const log = std.log.scoped(.wm);
 
 const Layout = @import("layout.zig").Layout;
+const Atoms = @import("atoms.zig").Atoms;
 
 pub const WM = struct {
     const Self = @This();
@@ -12,6 +14,8 @@ pub const WM = struct {
     x_display: *const c.Display,
     x_screen: *c.Screen,
     x_root: c.Window,
+
+    ewmh_check: c.Window,
 
     layout: Layout,
 
@@ -25,6 +29,7 @@ pub const WM = struct {
         wm.x_root = c.XDefaultRootWindow(@constCast(wm.x_display));
 
         wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
+        wm.ewmh_check = Atoms.init(wm.x_display, wm.x_root);
 
         return wm;
     }
@@ -34,7 +39,9 @@ pub const WM = struct {
 
         _ = c.XSetErrorHandler(Self.onError);
         _ = c.XSelectInput(@constCast(self.x_display), self.x_root, c.SubstructureRedirectMask | c.SubstructureNotifyMask);
-        _ = c.XDefineCursor(@constCast(self.x_display), self.x_root, c.XCreateFontCursor(@constCast(self.x_display), 2));
+
+        const cursor = c.XCreateFontCursor(@constCast(self.x_display), c.XC_left_ptr);
+        _ = c.XDefineCursor(@constCast(self.x_display), self.x_root, cursor);
 
         for ([_]c_uint{ c.Button1, c.Button3 }) |button| {
             _ = c.XGrabButton(@constCast(self.x_display), button, c.AnyModifier, self.x_root, c.False, c.ButtonPressMask | c.ButtonReleaseMask | c.ButtonMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
