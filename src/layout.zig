@@ -2,14 +2,10 @@ const std = @import("std");
 const c = @import("c.zig");
 
 const log = std.log.scoped(.layout);
+const Child = @import("nodes.zig").Child;
 
-const Child = struct {
-    window: c.Window,
-    position_x: c_int,
-    position_y: c_int,
-    window_width: c_int,
-    window_height: c_int,
-};
+const Children = std.DoublyLinkedList(Child);
+const Node = Children.Node;
 
 pub const Layout = struct {
     const Self = @This();
@@ -23,8 +19,8 @@ pub const Layout = struct {
     screen_width: c_uint,
     screen_height: c_uint,
 
-    children: std.DoublyLinkedList(Child),
-    active_node: ?*std.DoublyLinkedList(Child).Node = null,
+    children: Children,
+    active_node: ?*Node = null,
 
     normal_color: u32 = 0x909090,
     focus_color: u32 = 0xd895ee,
@@ -42,7 +38,7 @@ pub const Layout = struct {
         layout.screen_width = @intCast(c.XDisplayWidth(@constCast(display), screen));
         layout.screen_height = @intCast(c.XDisplayHeight(@constCast(display), screen));
 
-        layout.children = std.DoublyLinkedList(Child){};
+        layout.children = Children{};
         layout.active_node = null;
 
         layout.normal_color = 0x909090;
@@ -128,7 +124,7 @@ pub const Layout = struct {
     //     _ = event;
     // }
 
-    pub fn addChild(self: *Self, window: c.Window) !*std.DoublyLinkedList(Child).Node {
+    pub fn addChild(self: *Self, window: c.Window) !*Node {
         log.debug("adding child to managed children", .{});
 
         var attributes: c.XWindowAttributes = undefined;
@@ -142,7 +138,7 @@ pub const Layout = struct {
             .window_height = attributes.height,
         };
 
-        var node = try self.allocator.create(std.DoublyLinkedList(Child).Node);
+        var node = try self.allocator.create(Node);
 
         node.data = child;
         self.children.append(node);
@@ -150,7 +146,7 @@ pub const Layout = struct {
         return node;
     }
 
-    pub fn focus(self: *Self, node: ?*std.DoublyLinkedList(Child).Node) void {
+    pub fn focus(self: *Self, node: ?*Node) void {
         if (self.children.len == 0) return;
 
         if (self.active_node) |n| {
@@ -170,7 +166,7 @@ pub const Layout = struct {
         self.active_node = target;
     }
 
-    fn windowToNode(self: *Self, window: c.Window) ?*std.DoublyLinkedList(Child).Node {
+    fn windowToNode(self: *Self, window: c.Window) ?*Node {
         var next = self.children.first;
         while (next) |node| : (next = node.next) {
             if (node.data.window == window) return node;
