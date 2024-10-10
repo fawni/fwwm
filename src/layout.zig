@@ -121,7 +121,7 @@ pub const Layout = struct {
     }
 
     pub fn onEnterNotify(self: *Layout, event: *c.XCrossingEvent) void {
-        log.debug("entered", .{});
+        // log.debug("entered a window", .{});
         const node = self.windowToNode(event.window);
         if (node != self.active_node) {
             _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.hover_color);
@@ -129,7 +129,7 @@ pub const Layout = struct {
     }
 
     pub fn onLeaveNotify(self: *Layout, event: *c.XCrossingEvent) void {
-        log.debug("left", .{});
+        // log.debug("left a window", .{});
         const node = self.windowToNode(event.window);
         if (node != self.active_node) {
             _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
