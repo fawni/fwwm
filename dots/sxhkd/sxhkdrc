@@ -1,5 +1,5 @@
 ctrl + Return
-    alacritty
+    tty.sh
 ctrl + d
     rofi -show drun
 ctrl + w

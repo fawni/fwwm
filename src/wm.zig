@@ -60,9 +60,13 @@ pub const WM = struct {
         }
     }
 
-    fn onError(_: ?*c.Display, error_event: [*c]c.XErrorEvent) callconv(.C) c_int {
+    fn onError(display: ?*c.Display, error_event: [*c]c.XErrorEvent) callconv(.C) c_int {
         const event: *c.XErrorEvent = @ptrCast(error_event);
-        log.err("got XErrorEvent: {}", .{event.type});
+
+        var error_text: [1024]u8 = undefined;
+        _ = c.XGetErrorText(display, event.error_code, &error_text, 1024);
+
+        log.err("Received X error:\n    Request: {d}\n    Error code: {s} ({d})\n    Resource ID: {d}", .{ event.request_code, error_text, event.error_code, event.resourceid });
 
         return 0;
     }
