@@ -107,6 +107,17 @@ pub const Layout = struct {
         self.focus(self.active_node);
     }
 
+    pub fn onButtonPress(self: *Layout, event: *c.XButtonPressedEvent) void {
+        log.debug("button pressed", .{});
+        if (self.windowToNode(event.subwindow)) |node| if (node != self.active_node) {
+            self.focus(node);
+        };
+
+        // ♡: https://github.com/c00kiemon5ter/monsterwm/issues/12#issuecomment-15343347
+        _ = c.XAllowEvents(@constCast(self.x_display), c.ReplayPointer, c.CurrentTime);
+        _ = c.XSync(@constCast(self.x_display), c.False);
+    }
+
     // pub fn onKeyPress(self: *Layout, event: *c.XKeyPressedEvent) !void {
     //     _ = self;
     //     _ = event;

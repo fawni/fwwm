@@ -36,7 +36,11 @@ pub const WM = struct {
         _ = c.XSelectInput(@constCast(self.x_display), self.x_root, c.SubstructureRedirectMask | c.SubstructureNotifyMask);
         _ = c.XDefineCursor(@constCast(self.x_display), self.x_root, c.XCreateFontCursor(@constCast(self.x_display), 2));
 
-        _ = c.XSync(@constCast(self.x_display), 0);
+        for ([_]c_uint{ c.Button1, c.Button3 }) |button| {
+            _ = c.XGrabButton(@constCast(self.x_display), button, c.AnyModifier, self.x_root, c.False, c.ButtonPressMask | c.ButtonReleaseMask | c.ButtonMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
+        }
+
+        _ = c.XSync(@constCast(self.x_display), c.False);
 
         while (true) {
             var event: c.XEvent = undefined;
@@ -48,7 +52,7 @@ pub const WM = struct {
                 c.MapRequest => try self.layout.onMapRequest(&event.xmaprequest),
                 c.UnmapNotify => self.layout.onUnmapNotify(&event.xunmap),
                 c.DestroyNotify => self.layout.onDestroyNotify(&event.xdestroywindow),
-                // c.ButtonPress => try self.layout.onButtonPress(@constCast(&event.xbutton)),
+                c.ButtonPress => self.layout.onButtonPress(&event.xbutton),
                 // c.KeyPress => try self.layout.onKeyPress(&event.xkey),
                 // c.CreateNotify => try self.layout.onCreateNotify(&event.xcreatewindow),
                 else => {},

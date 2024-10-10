@@ -2,7 +2,7 @@ _default:
     @just --list
 
 @build:
-    zvm use 0.13.0   
+    zvm use 0.13.0
     zig build
 
 # width := "800"
