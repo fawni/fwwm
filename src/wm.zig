@@ -60,14 +60,9 @@ pub const WM = struct {
         }
     }
 
-    fn onError(_: ?*c.Display, event: [*c]c.XErrorEvent) callconv(.C) c_int {
-        const e: *c.XErrorEvent = @ptrCast(event);
-
-        log.err("got XErrorEvent: {}", .{e.type});
-
-        // switch (e.type) {
-        //     else => {},
-        // }
+    fn onError(_: ?*c.Display, error_event: [*c]c.XErrorEvent) callconv(.C) c_int {
+        const event: *c.XErrorEvent = @ptrCast(error_event);
+        log.err("got XErrorEvent: {}", .{event.type});
 
         return 0;
     }

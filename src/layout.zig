@@ -1,11 +1,12 @@
 const std = @import("std");
 const c = @import("c.zig");
+const nodes = @import("nodes.zig");
 
 const log = std.log.scoped(.layout);
-const Child = @import("nodes.zig").Child;
 
-const Children = std.DoublyLinkedList(Child);
-const Node = Children.Node;
+const Leaf = nodes.Leaf;
+const Leaves = nodes.Leaves;
+const Node = nodes.Node;
 
 pub const Layout = struct {
     const Self = @This();
@@ -19,7 +20,7 @@ pub const Layout = struct {
     screen_width: c_uint,
     screen_height: c_uint,
 
-    children: Children,
+    leaves: Leaves,
     active_node: ?*Node = null,
 
     normal_color: u32 = 0x909090,
@@ -38,7 +39,7 @@ pub const Layout = struct {
         layout.screen_width = @intCast(c.XDisplayWidth(@constCast(display), screen));
         layout.screen_height = @intCast(c.XDisplayHeight(@constCast(display), screen));
 
-        layout.children = Children{};
+        layout.leaves = Leaves{};
         layout.active_node = null;
 
         layout.normal_color = 0x909090;
@@ -71,20 +72,20 @@ pub const Layout = struct {
         _ = c.XSetWindowBorderWidth(@constCast(self.x_display), event.window, 2);
         _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
 
-        const node = try self.addChild(event.window);
+        const node = try self.addNode(event.window);
         self.focus(node);
     }
 
     pub fn onUnmapNotify(self: *Self, event: *const c.XUnmapEvent) void {
         log.debug("a node was unmapped", .{});
         if (self.windowToNode(event.window)) |node| {
-            self.children.remove(node);
+            self.leaves.remove(node);
         }
 
         if (self.active_node) |node| {
             self.active_node = node.prev;
         } else {
-            self.active_node = self.children.last;
+            self.active_node = self.leaves.last;
         }
         self.focus(self.active_node);
     }
@@ -92,13 +93,13 @@ pub const Layout = struct {
     pub fn onDestroyNotify(self: *Self, event: *const c.XDestroyWindowEvent) void {
         log.debug("a node was destroyed", .{});
         if (self.windowToNode(event.window)) |node| {
-            self.children.remove(node);
+            self.leaves.remove(node);
         }
 
         if (self.active_node) |node| {
             self.active_node = node.prev;
         } else {
-            self.active_node = self.children.last;
+            self.active_node = self.leaves.last;
         }
         self.focus(self.active_node);
     }
@@ -124,13 +125,13 @@ pub const Layout = struct {
     //     _ = event;
     // }
 
-    pub fn addChild(self: *Self, window: c.Window) !*Node {
-        log.debug("adding child to managed children", .{});
+    pub fn addNode(self: *Self, window: c.Window) !*Node {
+        log.debug("adding node to managed leaves", .{});
 
         var attributes: c.XWindowAttributes = undefined;
         _ = c.XGetWindowAttributes(@constCast(self.x_display), window, &attributes);
 
-        const child = Child{
+        const leaf = Leaf{
             .window = window,
             .position_x = attributes.x,
             .position_y = attributes.y,
@@ -140,20 +141,20 @@ pub const Layout = struct {
 
         var node = try self.allocator.create(Node);
 
-        node.data = child;
-        self.children.append(node);
+        node.data = leaf;
+        self.leaves.append(node);
 
         return node;
     }
 
     pub fn focus(self: *Self, node: ?*Node) void {
-        if (self.children.len == 0) return;
+        if (self.leaves.len == 0) return;
 
         if (self.active_node) |n| {
             _ = c.XSetWindowBorder(@constCast(self.x_display), n.data.window, self.normal_color);
         }
 
-        const target = node orelse self.children.last.?;
+        const target = node orelse self.leaves.last.?;
         _ = c.XSetInputFocus(
             @constCast(self.x_display),
             target.data.window,
@@ -167,7 +168,7 @@ pub const Layout = struct {
     }
 
     fn windowToNode(self: *Self, window: c.Window) ?*Node {
-        var next = self.children.first;
+        var next = self.leaves.first;
         while (next) |node| : (next = node.next) {
             if (node.data.window == window) return node;
         }
