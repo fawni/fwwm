@@ -2,7 +2,7 @@
 
 > fire walk with me
 
-a KISS floating x11 window manager fueled by coffee and cherry pies. (wip)
+a KISS floating x11 window manager fueled by coffee and cherry pies.
 
 ![scrot](./dots/scrot.png)
 

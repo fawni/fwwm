@@ -177,13 +177,13 @@ pub const Layout = struct {
     }
 
     pub fn on_enter_notify(self: *Layout, event: *c.XCrossingEvent) void {
-        log.debug("entered a window", .{});
+        // log.debug("entered a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.hover_color);
     }
 
     pub fn on_leave_notify(self: *Layout, event: *c.XCrossingEvent) void {
-        log.debug("left a window", .{});
+        // log.debug("left a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
     }
