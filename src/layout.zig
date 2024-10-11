@@ -69,7 +69,7 @@ pub const Layout = struct {
 
     pub fn on_map_request(self: *Self, event: *const c.XMapRequestEvent) !void {
         log.debug("mapping a node", .{});
-        _ = c.XSelectInput(self.x_display, event.window, c.EnterWindowMask | c.FocusChangeMask | c.PropertyChangeMask | c.StructureNotifyMask);
+        _ = c.XSelectInput(self.x_display, event.window, c.EnterWindowMask | c.LeaveWindowMask | c.FocusChangeMask | c.PropertyChangeMask | c.StructureNotifyMask);
         _ = c.XMapWindow(self.x_display, event.window);
 
         _ = c.XGrabButton(self.x_display, c.Button1, c.AnyModifier, event.window, c.True, c.ButtonPressMask | c.ButtonReleaseMask | c.PointerMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
@@ -182,13 +182,13 @@ pub const Layout = struct {
     }
 
     pub fn on_enter_notify(self: *Layout, event: *c.XCrossingEvent) void {
-        // log.debug("entered a window", .{});
+        log.debug("entered a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.active_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.hover_color);
     }
 
     pub fn on_leave_notify(self: *Layout, event: *c.XCrossingEvent) void {
-        // log.debug("left a window", .{});
+        log.debug("left a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.active_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
     }

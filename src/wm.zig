@@ -43,12 +43,8 @@ pub const WM = struct {
         log.info("fire walk with me", .{});
 
         _ = c.XSetErrorHandler(Self.on_error);
-        _ = c.XSelectInput(self.x_display, self.x_root, c.StructureNotifyMask | c.SubstructureRedirectMask | c.SubstructureNotifyMask | c.ButtonPressMask | c.PointerMotionMask | c.EnterWindowMask);
+        _ = c.XSelectInput(self.x_display, self.x_root, c.StructureNotifyMask | c.SubstructureRedirectMask | c.SubstructureNotifyMask | c.ButtonPressMask | c.PointerMotionMask);
         _ = c.XDefineCursor(self.x_display, self.x_root, cursors.normal);
-
-        // for ([_]c_uint{ c.Button1, c.Button3 }) |button| {
-        //     _ = c.XGrabButton(self.x_display, button, c.AnyModifier, self.x_root, c.False, c.ButtonPressMask | c.PointerMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
-        // }
 
         _ = c.XSync(self.x_display, c.False);
 

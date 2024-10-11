@@ -4,6 +4,8 @@
 
 a KISS floating x11 window manager fueled by coffee and cherry pies. (wip)
 
+![scrot](./dots/scrot.png)
+
 ## why
 
 i saw the abbreviation of David Lynch’s film [Twin Peaks: Fire Walk with
