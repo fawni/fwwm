@@ -35,7 +35,7 @@ pub const WM = struct {
     }
 
     pub fn run(self: *Self) !void {
-        log.info("Fire, walk with me.", .{});
+        log.info("fire walk with me", .{});
 
         _ = c.XSetErrorHandler(Self.onError);
         _ = c.XSelectInput(@constCast(self.x_display), self.x_root, c.SubstructureRedirectMask | c.SubstructureNotifyMask);
