@@ -5,9 +5,9 @@ const WM = @import("wm.zig").WM;
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == .ok);
-    const allocator = gpa.allocator();
+    var allocator = gpa.allocator();
 
-    var wm: WM = try WM.init(@constCast(&allocator));
+    var wm: WM = try WM.init(&allocator);
     defer wm.deinit();
 
     try wm.run();

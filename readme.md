@@ -6,7 +6,7 @@ a KISS floating x11 window manager fueled by coffee and cherry pies. (wip)
 
 ## why
 
-i saw the abbreviation of David Lynch’s movie [Twin Peaks: Fire Walk with
+i saw the abbreviation of David Lynch’s film [Twin Peaks: Fire Walk with
 Me](https://letterboxd.com/film/twin-peaks-fire-walk-with-me) (fw**wm**) and it reminded me of window managers so i made
 one. :)
 
