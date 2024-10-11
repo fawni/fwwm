@@ -214,24 +214,25 @@ pub const Layout = struct {
     pub fn focus(self: *Self, node: ?*ClientList.Node) void {
         if (self.clients.len == 0) return;
 
-        const target = node orelse self.clients.last.?;
-        if (self.focused_client == target) return;
+        const new_node = node orelse self.clients.last.?;
+        if (self.focused_client == new_node) return;
 
         // log.debug("focusing window with position: ({}, {})", .{ target.data.position_x, target.data.position_y });
         _ = c.XSetInputFocus(
             self.x_display,
-            target.data.window,
+            new_node.data.window,
             c.RevertToParent,
             c.CurrentTime,
         );
-        _ = c.XRaiseWindow(self.x_display, target.data.window);
+        _ = c.XRaiseWindow(self.x_display, new_node.data.window);
 
-        if (self.focused_client) |n| if (self.node_exists(n)) {
-            _ = c.XSetWindowBorder(self.x_display, n.data.window, self.normal_color);
+        if (self.focused_client) |old_node| if (self.node_exists(old_node)) {
+            _ = c.XSetWindowBorder(self.x_display, old_node.data.window, self.normal_color);
         };
-        _ = c.XSetWindowBorder(self.x_display, target.data.window, self.focus_color);
 
-        self.focused_client = target;
+        _ = c.XSetWindowBorder(self.x_display, new_node.data.window, self.focus_color);
+
+        self.focused_client = new_node;
     }
 
     fn node_from_window(self: *Self, window: c.Window) ?*ClientList.Node {
