@@ -1,11 +1,11 @@
-ctrl + Return
+super + Return
     tty.sh
-ctrl + d
+super + d
     rofi -show drun
-ctrl + w
+super + w
     rofi -show window
-ctrl + {q,shift + q}
+super + {q,shift + q}
     xdotool {windowclose,windowkill} $(xdotool getwindowfocus)
 
-ctrl + Escape
+super + Escape
     pkill -USR1 -x sxhkd

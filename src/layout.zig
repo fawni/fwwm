@@ -21,7 +21,7 @@ pub const Layout = struct {
     screen_height: c_uint,
 
     clients: ClientList,
-    active_client: ?*ClientList.Node,
+    focused_client: ?*ClientList.Node,
 
     normal_color: u32,
     hover_color: u32,
@@ -41,10 +41,10 @@ pub const Layout = struct {
         layout.screen_height = @intCast(c.XDisplayHeight(display, screen));
 
         layout.clients = ClientList{};
-        layout.active_client = null;
+        layout.focused_client = null;
 
         layout.normal_color = 0x909090;
-        layout.hover_color = 0xee95d2;
+        layout.hover_color = 0x97d0e8;
         layout.focus_color = 0xd895ee;
 
         return layout;
@@ -69,7 +69,7 @@ pub const Layout = struct {
 
     pub fn on_map_request(self: *Self, event: *const c.XMapRequestEvent) !void {
         log.debug("mapping a node", .{});
-        _ = c.XSelectInput(self.x_display, event.window, c.EnterWindowMask | c.LeaveWindowMask | c.FocusChangeMask | c.PropertyChangeMask | c.StructureNotifyMask);
+        _ = c.XSelectInput(self.x_display, event.window, c.EnterWindowMask | c.LeaveWindowMask | c.FocusChangeMask | c.PropertyChangeMask);
         _ = c.XMapWindow(self.x_display, event.window);
 
         _ = c.XGrabButton(self.x_display, c.Button1, c.AnyModifier, event.window, c.True, c.ButtonPressMask | c.ButtonReleaseMask | c.PointerMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
@@ -84,34 +84,31 @@ pub const Layout = struct {
 
     pub fn on_unmap_notify(self: *Self, event: *const c.XUnmapEvent) void {
         log.debug("a node was unmapped", .{});
-        if (self.node_from_window(event.window)) |node| self.clients.remove(node);
-
-        if (self.active_client) |node| {
-            self.active_client = node.prev;
-        } else {
-            self.active_client = self.clients.last;
+        if (self.node_from_window(event.window)) |node| {
+            if (self.focused_client == node) {
+                self.focus(null);
+            }
         }
-
-        self.focus(self.active_client);
     }
 
     pub fn on_destroy_notify(self: *Self, event: *const c.XDestroyWindowEvent) void {
         log.debug("a node was destroyed", .{});
-        if (self.node_from_window(event.window)) |node| self.clients.remove(node);
+        log.debug("destroyed node: {}", .{event.window});
+        if (self.node_from_window(event.window)) |node| {
+            log.debug("removing node", .{});
+            self.clients.remove(node);
 
-        if (self.active_client) |node| {
-            self.active_client = node.prev;
-        } else {
-            self.active_client = self.clients.last;
+            if (self.focused_client == node) {
+                self.focus(null);
+            }
         }
-        self.focus(self.active_client);
     }
 
     pub fn on_button_press(self: *Layout, event: *c.XButtonPressedEvent) !void {
         log.debug("button pressed", .{});
         const window = event.window;
 
-        if (self.node_from_window(window)) |node| if (node != self.active_client) self.focus(node);
+        if (self.node_from_window(window)) |node| if (node != self.focused_client) self.focus(node);
 
         // move and resize
         if (self.node_from_window(window)) |node| {
@@ -134,40 +131,38 @@ pub const Layout = struct {
                 var e: c.XEvent = undefined;
                 while (e.type != c.ButtonRelease) {
                     _ = c.XMaskEvent(self.x_display, c.PointerMotionMask | c.ButtonReleaseMask, &e);
-                    if (e.xbutton.state & c.Mod4Mask != 0) {
-                        // move
-                        if (e.xbutton.state & c.Button1Mask != 0) {
-                            switch (e.type) {
-                                c.MotionNotify => {
-                                    // log.debug("Weeeee!!!", .{});
-                                    const new_x = old_client_x + (e.xmotion.x - pointer_x);
-                                    const new_y = old_client_y + (e.xmotion.y - pointer_y);
+                    // move
+                    if (e.xbutton.state & c.Button1Mask != 0) {
+                        switch (e.type) {
+                            c.MotionNotify => {
+                                // log.debug("Weeeee!!!", .{});
+                                const new_x = old_client_x + (e.xmotion.x - pointer_x);
+                                const new_y = old_client_y + (e.xmotion.y - pointer_y);
 
-                                    _ = c.XMoveWindow(self.x_display, node.data.window, new_x, new_y);
+                                _ = c.XMoveWindow(self.x_display, node.data.window, new_x, new_y);
 
-                                    node.data.position_x = new_x;
-                                    node.data.position_y = new_y;
-                                },
-                                else => {},
-                            }
-                        } else if (e.xbutton.state & c.Button3Mask != 0) {
-                            // resize
-                            // TODO: change position of resize based on the closest corner to the pointer with XResizeMoveWindow
-                            switch (e.type) {
-                                c.MotionNotify => {
-                                    // log.debug("Wooooo!!!", .{});
-                                    var new_width = e.xmotion.x - pointer_x + old_client_width;
-                                    var new_height = e.xmotion.y - pointer_y + old_client_height;
-                                    if (new_width < 1) new_width = 1;
-                                    if (new_height < 1) new_height = 1;
+                                node.data.position_x = new_x;
+                                node.data.position_y = new_y;
+                            },
+                            else => {},
+                        }
+                    } else if (e.xbutton.state & c.Button3Mask != 0) {
+                        // resize
+                        // TODO: change position of resize based on the closest corner to the pointer with XResizeMoveWindow
+                        switch (e.type) {
+                            c.MotionNotify => {
+                                // log.debug("Wooooo!!!", .{});
+                                var new_width = e.xmotion.x - pointer_x + old_client_width;
+                                var new_height = e.xmotion.y - pointer_y + old_client_height;
+                                if (new_width < 1) new_width = 1;
+                                if (new_height < 1) new_height = 1;
 
-                                    _ = c.XResizeWindow(self.x_display, node.data.window, @intCast(new_width), @intCast(new_height));
+                                _ = c.XResizeWindow(self.x_display, node.data.window, @intCast(new_width), @intCast(new_height));
 
-                                    node.data.window_width = new_width;
-                                    node.data.window_height = new_height;
-                                },
-                                else => {},
-                            }
+                                node.data.window_width = new_width;
+                                node.data.window_height = new_height;
+                            },
+                            else => {},
                         }
                     }
                 }
@@ -184,16 +179,17 @@ pub const Layout = struct {
     pub fn on_enter_notify(self: *Layout, event: *c.XCrossingEvent) void {
         log.debug("entered a window", .{});
         const node = self.node_from_window(event.window);
-        if (node != self.active_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.hover_color);
+        if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.hover_color);
     }
 
     pub fn on_leave_notify(self: *Layout, event: *c.XCrossingEvent) void {
         log.debug("left a window", .{});
         const node = self.node_from_window(event.window);
-        if (node != self.active_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
+        if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
     }
 
     pub fn add_client(self: *Self, window: c.Window) !*ClientList.Node {
+        if (self.node_from_window(window)) |node| return node;
         log.debug("adding node to managed clients", .{});
 
         var attributes: c.XWindowAttributes = undefined;
@@ -217,9 +213,11 @@ pub const Layout = struct {
 
     pub fn focus(self: *Self, node: ?*ClientList.Node) void {
         if (self.clients.len == 0) return;
-        if (self.active_client) |n| _ = c.XSetWindowBorder(self.x_display, n.data.window, self.normal_color);
 
         const target = node orelse self.clients.last.?;
+        if (self.focused_client == target) return;
+
+        // log.debug("focusing window with position: ({}, {})", .{ target.data.position_x, target.data.position_y });
         _ = c.XSetInputFocus(
             self.x_display,
             target.data.window,
@@ -227,14 +225,30 @@ pub const Layout = struct {
             c.CurrentTime,
         );
         _ = c.XRaiseWindow(self.x_display, target.data.window);
+
+        if (self.focused_client) |n| if (self.node_exists(n)) {
+            _ = c.XSetWindowBorder(self.x_display, n.data.window, self.normal_color);
+        };
         _ = c.XSetWindowBorder(self.x_display, target.data.window, self.focus_color);
-        self.active_client = target;
+
+        self.focused_client = target;
     }
 
     fn node_from_window(self: *Self, window: c.Window) ?*ClientList.Node {
+        if (self.clients.len == 0) return null;
+
         var next = self.clients.first;
         while (next) |node| : (next = node.next) if (node.data.window == window) return node;
 
         return null;
+    }
+
+    fn node_exists(self: *Self, node: *ClientList.Node) bool {
+        if (self.clients.len == 0) return false;
+
+        var next = self.clients.first;
+        while (next) |n| : (next = n.next) if (n == node) return true;
+
+        return false;
     }
 };
