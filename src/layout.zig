@@ -1,12 +1,11 @@
 const std = @import("std");
 const c = @import("c.zig");
-const nodes = @import("nodes.zig");
+const clients = @import("clients.zig");
 
 const log = std.log.scoped(.layout);
 
-const Leaf = nodes.Leaf;
-const Leaves = nodes.Leaves;
-const Node = nodes.Node;
+const Client = clients.Client;
+const ClientList = clients.ClientList;
 
 pub const Layout = struct {
     const Self = @This();
@@ -20,8 +19,8 @@ pub const Layout = struct {
     screen_width: c_uint,
     screen_height: c_uint,
 
-    leaves: Leaves,
-    active_node: ?*Node,
+    clients: ClientList,
+    active_client: ?*ClientList.Node,
 
     normal_color: u32,
     hover_color: u32,
@@ -40,8 +39,8 @@ pub const Layout = struct {
         layout.screen_width = @intCast(c.XDisplayWidth(@constCast(display), screen));
         layout.screen_height = @intCast(c.XDisplayHeight(@constCast(display), screen));
 
-        layout.leaves = Leaves{};
-        layout.active_node = null;
+        layout.clients = ClientList{};
+        layout.active_client = null;
 
         layout.normal_color = 0x909090;
         layout.hover_color = 0xee95d2;
@@ -77,41 +76,41 @@ pub const Layout = struct {
         _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
         _ = c.XSetWindowBorderWidth(@constCast(self.x_display), event.window, 2);
 
-        const node = try self.addNode(event.window);
+        const node = try self.addClient(event.window);
         self.focus(node);
     }
 
     pub fn onUnmapNotify(self: *Self, event: *const c.XUnmapEvent) void {
         log.debug("a node was unmapped", .{});
         if (self.windowToNode(event.window)) |node| {
-            self.leaves.remove(node);
+            self.clients.remove(node);
         }
 
-        if (self.active_node) |node| {
-            self.active_node = node.prev;
+        if (self.active_client) |node| {
+            self.active_client = node.prev;
         } else {
-            self.active_node = self.leaves.last;
+            self.active_client = self.clients.last;
         }
-        self.focus(self.active_node);
+        self.focus(self.active_client);
     }
 
     pub fn onDestroyNotify(self: *Self, event: *const c.XDestroyWindowEvent) void {
         log.debug("a node was destroyed", .{});
         if (self.windowToNode(event.window)) |node| {
-            self.leaves.remove(node);
+            self.clients.remove(node);
         }
 
-        if (self.active_node) |node| {
-            self.active_node = node.prev;
+        if (self.active_client) |node| {
+            self.active_client = node.prev;
         } else {
-            self.active_node = self.leaves.last;
+            self.active_client = self.clients.last;
         }
-        self.focus(self.active_node);
+        self.focus(self.active_client);
     }
 
     pub fn onButtonPress(self: *Layout, event: *c.XButtonPressedEvent) void {
         log.debug("button pressed", .{});
-        if (self.windowToNode(event.subwindow)) |node| if (node != self.active_node) {
+        if (self.windowToNode(event.subwindow)) |node| if (node != self.active_client) {
             self.focus(node);
         };
 
@@ -123,7 +122,7 @@ pub const Layout = struct {
     pub fn onEnterNotify(self: *Layout, event: *c.XCrossingEvent) void {
         // log.debug("entered a window", .{});
         const node = self.windowToNode(event.window);
-        if (node != self.active_node) {
+        if (node != self.active_client) {
             _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.hover_color);
         }
     }
@@ -131,28 +130,18 @@ pub const Layout = struct {
     pub fn onLeaveNotify(self: *Layout, event: *c.XCrossingEvent) void {
         // log.debug("left a window", .{});
         const node = self.windowToNode(event.window);
-        if (node != self.active_node) {
+        if (node != self.active_client) {
             _ = c.XSetWindowBorder(@constCast(self.x_display), event.window, self.normal_color);
         }
     }
 
-    // pub fn onKeyPress(self: *Layout, event: *c.XKeyPressedEvent) !void {
-    //     _ = self;
-    //     _ = event;
-    // }
-
-    // pub fn onCreateNotify(self: *const Layout, event: *const c.XCreateWindowEvent) !void {
-    //     _ = self;
-    //     _ = event;
-    // }
-
-    pub fn addNode(self: *Self, window: c.Window) !*Node {
-        log.debug("adding node to managed leaves", .{});
+    pub fn addClient(self: *Self, window: c.Window) !*ClientList.Node {
+        log.debug("adding node to managed clients", .{});
 
         var attributes: c.XWindowAttributes = undefined;
         _ = c.XGetWindowAttributes(@constCast(self.x_display), window, &attributes);
 
-        const leaf = Leaf{
+        const client = Client{
             .window = window,
             .position_x = attributes.x,
             .position_y = attributes.y,
@@ -160,22 +149,22 @@ pub const Layout = struct {
             .window_height = attributes.height,
         };
 
-        var node = try self.allocator.create(Node);
+        var node = try self.allocator.create(ClientList.Node);
 
-        node.data = leaf;
-        self.leaves.append(node);
+        node.data = client;
+        self.clients.append(node);
 
         return node;
     }
 
-    pub fn focus(self: *Self, node: ?*Node) void {
-        if (self.leaves.len == 0) return;
+    pub fn focus(self: *Self, node: ?*ClientList.Node) void {
+        if (self.clients.len == 0) return;
 
-        if (self.active_node) |n| {
+        if (self.active_client) |n| {
             _ = c.XSetWindowBorder(@constCast(self.x_display), n.data.window, self.normal_color);
         }
 
-        const target = node orelse self.leaves.last.?;
+        const target = node orelse self.clients.last.?;
         _ = c.XSetInputFocus(
             @constCast(self.x_display),
             target.data.window,
@@ -185,11 +174,11 @@ pub const Layout = struct {
         _ = c.XRaiseWindow(@constCast(self.x_display), target.data.window);
         _ = c.XSetWindowBorder(@constCast(self.x_display), target.data.window, self.focus_color);
 
-        self.active_node = target;
+        self.active_client = target;
     }
 
-    fn windowToNode(self: *Self, window: c.Window) ?*Node {
-        var next = self.leaves.first;
+    fn windowToNode(self: *Self, window: c.Window) ?*ClientList.Node {
+        var next = self.clients.first;
         while (next) |node| : (next = node.next) {
             if (node.data.window == window) return node;
         }

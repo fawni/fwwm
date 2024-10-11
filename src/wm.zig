@@ -53,7 +53,6 @@ pub const WM = struct {
             var event: c.XEvent = undefined;
             _ = c.XNextEvent(@constCast(self.x_display), &event);
 
-            // log.debug("got XEvent: {}", .{event.type});
             switch (event.type) {
                 c.ConfigureRequest => self.layout.onConfigureRequest(&event.xconfigurerequest),
                 c.MapRequest => try self.layout.onMapRequest(&event.xmaprequest),
@@ -62,8 +61,6 @@ pub const WM = struct {
                 c.ButtonPress => self.layout.onButtonPress(&event.xbutton),
                 c.EnterNotify => self.layout.onEnterNotify(&event.xcrossing),
                 c.LeaveNotify => self.layout.onLeaveNotify(&event.xcrossing),
-                // c.KeyPress => try self.layout.onKeyPress(&event.xkey),
-                // c.CreateNotify => try self.layout.onCreateNotify(&event.xcreatewindow),
                 else => {},
             }
         }
