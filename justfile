@@ -14,7 +14,7 @@ width := "1280"
 height := "720"
 
 @dev: (build)
-    startx ./xinitrc -- /usr/bin/Xephyr -ac -screen {{width}}x{{height}} -reset
+    startx ./dots/xinitrc -- $(which Xephyr) -ac -screen {{width}}x{{height}} -reset
 
 @install: (release)
     sudo cp ./zig-out/bin/fwwm /usr/bin/fwwm
