@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=fwwm
+Comment=fwwm — A KISS floating x11 window manager fueled by coffee and cherry pies
+Exec=fwwm
+Type=XSession

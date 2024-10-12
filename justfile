@@ -1,14 +1,20 @@
 _default:
     @just --list
 
-@build:
+@set-version:
     zvm use 0.13.0
+
+@build: (set-version)
     zig build
 
-# width := "800"
-# height := "600"
+@release: (set-version)
+    zig build --release=safe
+
 width := "1280"
 height := "720"
 
 @dev: (build)
     startx ./xinitrc -- /usr/bin/Xephyr -ac -screen {{width}}x{{height}} -reset
+
+@install: (release)
+    sudo cp ./zig-out/bin/fwwm /usr/bin/fwwm
