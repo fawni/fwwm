@@ -59,6 +59,7 @@ pub const WM = struct {
                 c.ButtonPress => try self.layout.on_button_press(&event.xbutton),
                 c.EnterNotify => self.layout.on_enter_notify(&event.xcrossing),
                 c.LeaveNotify => self.layout.on_leave_notify(&event.xcrossing),
+                c.ClientMessage => self.layout.on_client_message(&event.xclient),
                 else => {},
             }
         }

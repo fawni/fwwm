@@ -2,6 +2,7 @@ const std = @import("std");
 const c = @import("c.zig");
 const clients = @import("clients.zig");
 
+const A = @import("atoms.zig");
 const C = @import("cursors.zig");
 const M = @import("masks.zig");
 
@@ -106,7 +107,7 @@ pub const Layout = struct {
         }
     }
 
-    pub fn on_button_press(self: *Layout, event: *c.XButtonPressedEvent) !void {
+    pub fn on_button_press(self: *Self, event: *c.XButtonPressedEvent) !void {
         // log.debug("button pressed", .{});
         const window = event.window;
 
@@ -168,16 +169,24 @@ pub const Layout = struct {
         self.propagate_pointer();
     }
 
-    pub fn on_enter_notify(self: *Layout, event: *c.XCrossingEvent) void {
+    pub fn on_enter_notify(self: *Self, event: *c.XCrossingEvent) void {
         // log.debug("entered a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.hover_color);
     }
 
-    pub fn on_leave_notify(self: *Layout, event: *c.XCrossingEvent) void {
+    pub fn on_leave_notify(self: *Self, event: *c.XCrossingEvent) void {
         // log.debug("left a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
+    }
+
+    pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
+        _ = self;
+
+        if (event.message_type == A.fwwm_client_event) {
+            log.debug("hi cherry :)", .{});
+        }
     }
 
     pub fn add_client(self: *Self, window: c.Window) !*ClientList.Node {

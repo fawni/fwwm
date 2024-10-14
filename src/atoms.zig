@@ -8,7 +8,7 @@ pub var net_supported: c.Atom = undefined;
 pub var net_wm_check: c.Atom = undefined;
 pub var net_wm_name: c.Atom = undefined;
 
-pub var fwwm_client_events: c.Atom = undefined;
+pub var fwwm_client_event: c.Atom = undefined;
 
 const Self = @This();
 
@@ -17,9 +17,12 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
     const check = c.XCreateSimpleWindow(display, root, 0, 0, 1, 1, 0, 0, 0);
 
     utf8string = c.XInternAtom(display, "UTF8_STRING", c.False);
+
     net_supported = c.XInternAtom(display, "_NET_SUPPORTED", c.False);
     net_wm_check = c.XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", c.False);
     net_wm_name = c.XInternAtom(display, "_NET_WM_NAME", c.False);
+
+    fwwm_client_event = c.XInternAtom(display, "FWWM_CLIENT_EVENT", c.False);
 
     const net_atoms = [_]c.Atom{
         net_supported,

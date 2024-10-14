@@ -19,3 +19,4 @@ height := "720"
 @install: (release)
     sudo cp ./zig-out/bin/fwwm /usr/bin/fwwm
     sudo cp ./contrib/fwwm.desktop /usr/share/xsessions/fwwm.desktop
+    cargo install --path cherry -q
