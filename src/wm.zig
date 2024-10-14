@@ -1,13 +1,11 @@
 const std = @import("std");
 const c = @import("c.zig");
-const atoms = @import("atoms.zig");
-const cursors = @import("cursors.zig");
+const C = @import("cursors.zig");
 
 const log = std.log.scoped(.wm);
 
 const Layout = @import("layout.zig").Layout;
-const Atoms = atoms.Atoms;
-const Cursors = cursors.Cursors;
+const Atoms = @import("atoms.zig").Atoms;
 
 pub const WM = struct {
     const Self = @This();
@@ -34,7 +32,7 @@ pub const WM = struct {
         wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
         wm.ewmh_check = Atoms.init(wm.x_display, wm.x_root);
 
-        _ = Cursors.init(wm.x_display);
+        C.init(wm.x_display);
 
         return wm;
     }
@@ -44,7 +42,7 @@ pub const WM = struct {
 
         _ = c.XSetErrorHandler(Self.on_error);
         _ = c.XSelectInput(self.x_display, self.x_root, c.StructureNotifyMask | c.SubstructureRedirectMask | c.SubstructureNotifyMask | c.ButtonPressMask | c.PointerMotionMask);
-        _ = c.XDefineCursor(self.x_display, self.x_root, cursors.normal);
+        _ = c.XDefineCursor(self.x_display, self.x_root, C.normal);
 
         _ = c.XSync(self.x_display, c.False);
 

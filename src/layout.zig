@@ -1,7 +1,9 @@
 const std = @import("std");
 const c = @import("c.zig");
 const clients = @import("clients.zig");
-const cursors = @import("cursors.zig");
+
+const C = @import("cursors.zig");
+const M = @import("masks.zig");
 
 const log = std.log.scoped(.layout);
 
@@ -69,13 +71,13 @@ pub const Layout = struct {
 
     pub fn on_map_request(self: *Self, event: *const c.XMapRequestEvent) !void {
         log.debug("mapping a window: {}", .{event.window});
-        _ = c.XSelectInput(self.x_display, event.window, c.EnterWindowMask | c.LeaveWindowMask | c.FocusChangeMask | c.PropertyChangeMask);
+
+        _ = c.XSelectInput(self.x_display, event.window, M.MAP_WINDOW_MASK);
         _ = c.XMapWindow(self.x_display, event.window);
 
-        _ = c.XGrabButton(self.x_display, c.Button1, c.AnyModifier, event.window, c.True, c.ButtonPressMask | c.ButtonReleaseMask | c.PointerMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
-        _ = c.XGrabButton(self.x_display, c.Button3, c.AnyModifier, event.window, c.True, c.ButtonPressMask | c.ButtonReleaseMask | c.PointerMotionMask, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
+        _ = c.XGrabButton(self.x_display, c.Button1, c.AnyModifier, event.window, c.True, M.POINTER_MASK, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
+        _ = c.XGrabButton(self.x_display, c.Button3, c.AnyModifier, event.window, c.True, M.POINTER_MASK, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
 
-        _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
         _ = c.XSetWindowBorderWidth(self.x_display, event.window, 2);
 
         const node = try self.add_client(event.window);
@@ -84,7 +86,10 @@ pub const Layout = struct {
 
     pub fn on_unmap_notify(self: *Self, event: *const c.XUnmapEvent) void {
         log.debug("a window was unmapped: {}", .{event.window});
+
         if (self.node_from_window(event.window)) |node| {
+            self.clients.remove(node);
+
             if (self.focused_client == node) {
                 self.focus(null);
             }
@@ -93,8 +98,8 @@ pub const Layout = struct {
 
     pub fn on_destroy_notify(self: *Self, event: *const c.XDestroyWindowEvent) void {
         log.debug("a window was destroyed: {}", .{event.window});
+
         if (self.node_from_window(event.window)) |node| {
-            log.debug("removing client node: {}", .{event.window});
             self.clients.remove(node);
 
             if (self.focused_client == node) {
@@ -119,13 +124,12 @@ pub const Layout = struct {
             _ = c.XQueryPointer(self.x_display, self.x_root, &dummy_window, &dummy_window, &pointer_x, &pointer_y, &dummy_int, &dummy_int, &dummy_uint);
 
             if (event.state & c.Mod4Mask != 0) {
-                _ = c.XGrabPointer(self.x_display, self.x_root, c.False, c.PointerMotionMask | c.ButtonPressMask | c.ButtonReleaseMask, c.GrabModeAsync, c.GrabModeAsync, c.None, cursors.move, c.CurrentTime);
-                // log.debug("Pointer grabbed successfully!", .{});
+                self.grab_pointer();
 
-                const old_client_x = node.data.position_x;
-                const old_client_y = node.data.position_y;
-                const old_client_width = node.data.window_width;
-                const old_client_height = node.data.window_height;
+                const old_client_x = node.data.x;
+                const old_client_y = node.data.y;
+                const old_client_width = node.data.width;
+                const old_client_height = node.data.height;
 
                 var e: c.XEvent = undefined;
                 while (e.type != c.ButtonRelease) {
@@ -134,45 +138,36 @@ pub const Layout = struct {
                     if (e.xbutton.state & c.Button1Mask != 0) {
                         switch (e.type) {
                             c.MotionNotify => {
-                                // log.debug("Weeeee!!!", .{});
                                 const new_x = old_client_x + (e.xmotion.x - pointer_x);
                                 const new_y = old_client_y + (e.xmotion.y - pointer_y);
 
-                                _ = c.XMoveWindow(self.x_display, node.data.window, new_x, new_y);
+                                node.data.move(new_x, new_y);
 
-                                node.data.position_x = new_x;
-                                node.data.position_y = new_y;
+                                node.data.x = new_x;
+                                node.data.y = new_y;
                             },
                             else => {},
                         }
                     } else if (e.xbutton.state & c.Button3Mask != 0) {
                         // resize
-                        // TODO: change position of resize based on the closest corner to the pointer with XResizeMoveWindow
+                        // TODO: change position of resize based on the closest corner to the pointer.
                         switch (e.type) {
                             c.MotionNotify => {
-                                // log.debug("Wooooo!!!", .{});
                                 var new_width = e.xmotion.x - pointer_x + old_client_width;
                                 var new_height = e.xmotion.y - pointer_y + old_client_height;
                                 if (new_width < 1) new_width = 1;
                                 if (new_height < 1) new_height = 1;
 
-                                _ = c.XResizeWindow(self.x_display, node.data.window, @intCast(new_width), @intCast(new_height));
-
-                                node.data.window_width = new_width;
-                                node.data.window_height = new_height;
+                                node.data.resize(@intCast(new_width), @intCast(new_height));
                             },
                             else => {},
                         }
                     }
                 }
-                // log.debug("wee over :(", .{});
-                _ = c.XUngrabPointer(self.x_display, c.CurrentTime);
+                self.ungrab_pointer();
             }
         }
-
-        // ♡: https://github.com/c00kiemon5ter/monsterwm/issues/12#issuecomment-15343347
-        _ = c.XAllowEvents(self.x_display, c.ReplayPointer, c.CurrentTime);
-        _ = c.XSync(self.x_display, c.False);
+        self.propagate_pointer();
     }
 
     pub fn on_enter_notify(self: *Layout, event: *c.XCrossingEvent) void {
@@ -195,11 +190,12 @@ pub const Layout = struct {
         _ = c.XGetWindowAttributes(self.x_display, window, &attributes);
 
         const client = Client{
+            .x_display = self.x_display,
             .window = window,
-            .position_x = attributes.x,
-            .position_y = attributes.y,
-            .window_width = attributes.width,
-            .window_height = attributes.height,
+            .x = attributes.x,
+            .y = attributes.y,
+            .width = attributes.width,
+            .height = attributes.height,
         };
 
         var node = try self.allocator.create(ClientList.Node);
@@ -210,28 +206,34 @@ pub const Layout = struct {
         return node;
     }
 
-    pub fn focus(self: *Self, node: ?*ClientList.Node) void {
+    fn focus(self: *Self, node: ?*ClientList.Node) void {
         if (self.clients.len == 0) return;
 
-        const new_node = node orelse self.clients.last.?;
-        if (self.focused_client == new_node) return;
+        if (node orelse self.clients.last orelse self.clients.first) |target_node| {
+            if (self.focused_client == target_node) return;
 
-        // log.debug("focusing window with position: ({}, {})", .{ target.data.position_x, target.data.position_y });
-        _ = c.XSetInputFocus(
-            self.x_display,
-            new_node.data.window,
-            c.RevertToParent,
-            c.CurrentTime,
-        );
-        _ = c.XRaiseWindow(self.x_display, new_node.data.window);
+            target_node.data.focus(self.focus_color);
 
-        if (self.focused_client) |old_node| if (self.node_exists(old_node)) {
-            _ = c.XSetWindowBorder(self.x_display, old_node.data.window, self.normal_color);
-        };
+            if (self.focused_client) |old_node| if (self.node_exists(old_node)) {
+                old_node.data.set_border_color(self.normal_color);
+            };
 
-        _ = c.XSetWindowBorder(self.x_display, new_node.data.window, self.focus_color);
+            self.focused_client = target_node;
+        }
+    }
 
-        self.focused_client = new_node;
+    fn grab_pointer(self: *Self) void {
+        _ = c.XGrabPointer(self.x_display, self.x_root, c.False, M.POINTER_MASK, c.GrabModeAsync, c.GrabModeAsync, c.None, C.move, c.CurrentTime);
+    }
+
+    fn ungrab_pointer(self: *Self) void {
+        _ = c.XUngrabPointer(self.x_display, c.CurrentTime);
+    }
+
+    // ♡: https://github.com/c00kiemon5ter/monsterwm/issues/12#issuecomment-15343347
+    fn propagate_pointer(self: *Self) void {
+        _ = c.XAllowEvents(self.x_display, c.ReplayPointer, c.CurrentTime);
+        _ = c.XSync(self.x_display, c.False);
     }
 
     fn node_from_window(self: *Self, window: c.Window) ?*ClientList.Node {
