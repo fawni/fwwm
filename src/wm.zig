@@ -68,6 +68,12 @@ pub const WM = struct {
     fn on_error(display: ?*c.Display, error_event: [*c]c.XErrorEvent) callconv(.C) c_int {
         const event: *c.XErrorEvent = @ptrCast(error_event);
 
+        if (event.error_code == c.BadWindow or
+            (event.request_code == c.X_SetInputFocus and event.error_code == c.BadMatch) or
+            (event.request_code == c.X_ConfigureWindow and event.error_code == c.BadMatch) or
+            (event.request_code == c.X_GrabButton and event.error_code == c.BadAccess) or
+            (event.request_code == c.X_GrabKey and event.error_code == c.BadAccess)) return 0;
+
         switch (event.error_code) {
             c.BadAccess => {
                 log.err("we live inside a dream, but who is the dreamer?", .{});

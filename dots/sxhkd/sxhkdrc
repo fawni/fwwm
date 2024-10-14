@@ -5,7 +5,7 @@ super + d
 super + w
     rofi -show window
 super + {q,shift + q}
-    xdotool {windowclose,windowkill} $(xdotool getwindowfocus)
+    cherry {close,kill}
 
 super + Escape
     pkill -USR1 -x sxhkd

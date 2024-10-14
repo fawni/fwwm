@@ -42,8 +42,8 @@ enum IPCCommand {
 
 // sadly #[repr(i64)] doesn't work with non-unit enum variants
 impl From<IPCCommand> for i64 {
-    fn from(val: IPCCommand) -> Self {
-        match val {
+    fn from(cmd: IPCCommand) -> Self {
+        match cmd {
             IPCCommand::Close => 0,
             IPCCommand::Kill => 1,
             IPCCommand::Move { .. } => 2,

@@ -72,7 +72,7 @@ pub const Layout = struct {
     }
 
     pub fn on_map_request(self: *Self, event: *const c.XMapRequestEvent) !void {
-        log.debug("mapping a window: {}", .{event.window});
+        // log.debug("mapping a window: {}", .{event.window});
 
         _ = c.XSelectInput(self.x_display, event.window, M.MAP_WINDOW_MASK);
         _ = c.XMapWindow(self.x_display, event.window);
@@ -87,7 +87,7 @@ pub const Layout = struct {
     }
 
     pub fn on_unmap_notify(self: *Self, event: *const c.XUnmapEvent) void {
-        log.debug("a window was unmapped: {}", .{event.window});
+        // log.debug("a window was unmapped: {}", .{event.window});
 
         if (self.node_from_window(event.window)) |node| {
             if (self.focused_client == node) {
@@ -97,7 +97,7 @@ pub const Layout = struct {
     }
 
     pub fn on_destroy_notify(self: *Self, event: *const c.XDestroyWindowEvent) void {
-        log.debug("a window was destroyed: {}", .{event.window});
+        // log.debug("a window was destroyed: {}", .{event.window});
 
         if (self.node_from_window(event.window)) |node| {
             self.clients.remove(node);
@@ -182,7 +182,7 @@ pub const Layout = struct {
 
     pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
         if (event.message_type == A.fwwm_client_event) {
-            log.debug("hi cherry :)", .{});
+            // log.debug("hi cherry :)", .{});
 
             if (self.focused_client) |node| {
                 ipc.handle(node, event.data.l);
@@ -192,7 +192,7 @@ pub const Layout = struct {
 
     pub fn add_client(self: *Self, window: c.Window) !*ClientList.Node {
         if (self.node_from_window(window)) |node| return node;
-        log.debug("adding window to managed clients: {}", .{window});
+        // log.debug("adding window to managed clients: {}", .{window});
 
         var attributes: c.XWindowAttributes = undefined;
         _ = c.XGetWindowAttributes(self.x_display, window, &attributes);
