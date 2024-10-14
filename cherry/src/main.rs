@@ -38,7 +38,7 @@ unsafe fn send_command() {
         format: XA_VISUALID as i32,
         display,
         send_event: False,
-        serial: 150,
+        serial: 0,
     };
 
     let mut event: XEvent = XEvent {

@@ -7,7 +7,7 @@ _default:
 @build: (set-version)
     zig build
 
-@release: (set-version)
+release: (set-version)
     zig build --release=safe
 
 width := "1280"
@@ -16,7 +16,9 @@ height := "720"
 @dev: (build)
     startx ./dots/xinitrc -- $(which Xephyr) -ac -screen {{width}}x{{height}} -reset
 
-@install: (release)
+cherry:
+    cargo install --path cherry
+
+install: (release) && (cherry)
     sudo cp ./zig-out/bin/fwwm /usr/bin/fwwm
     sudo cp ./contrib/fwwm.desktop /usr/share/xsessions/fwwm.desktop
-    cargo install --path cherry -q
