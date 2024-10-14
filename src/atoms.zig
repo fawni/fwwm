@@ -8,29 +8,29 @@ pub var net_supported: c.Atom = undefined;
 pub var net_wm_check: c.Atom = undefined;
 pub var net_wm_name: c.Atom = undefined;
 
-pub const Atoms = struct {
-    const Self = @This();
+pub var fwwm_client_events: c.Atom = undefined;
 
-    pub fn init(display: *c.Display, root: c.Window) c.Window {
-        const WM_NAME = "fwwm";
-        const check = c.XCreateSimpleWindow(display, root, 0, 0, 1, 1, 0, 0, 0);
+const Self = @This();
 
-        utf8string = c.XInternAtom(display, "UTF8_STRING", c.False);
-        net_supported = c.XInternAtom(display, "_NET_SUPPORTED", c.False);
-        net_wm_check = c.XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", c.False);
-        net_wm_name = c.XInternAtom(display, "_NET_WM_NAME", c.False);
+pub fn init(display: *c.Display, root: c.Window) c.Window {
+    const WM_NAME = "fwwm";
+    const check = c.XCreateSimpleWindow(display, root, 0, 0, 1, 1, 0, 0, 0);
 
-        const net_atoms = [_]c.Atom{
-            net_supported,
-            net_wm_check,
-            net_wm_name,
-        };
+    utf8string = c.XInternAtom(display, "UTF8_STRING", c.False);
+    net_supported = c.XInternAtom(display, "_NET_SUPPORTED", c.False);
+    net_wm_check = c.XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", c.False);
+    net_wm_name = c.XInternAtom(display, "_NET_WM_NAME", c.False);
 
-        _ = c.XChangeProperty(display, check, net_wm_check, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&check), 1);
-        _ = c.XChangeProperty(display, check, net_wm_name, utf8string, c.XA_CURSOR, c.PropModeReplace, WM_NAME, WM_NAME.len);
-        _ = c.XChangeProperty(display, root, net_wm_check, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&check), 1);
-        _ = c.XChangeProperty(display, root, net_supported, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&net_atoms), net_atoms.len);
+    const net_atoms = [_]c.Atom{
+        net_supported,
+        net_wm_check,
+        net_wm_name,
+    };
 
-        return check;
-    }
-};
+    _ = c.XChangeProperty(display, check, net_wm_check, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&check), 1);
+    _ = c.XChangeProperty(display, check, net_wm_name, utf8string, c.XA_CURSOR, c.PropModeReplace, WM_NAME, WM_NAME.len);
+    _ = c.XChangeProperty(display, root, net_wm_check, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&check), 1);
+    _ = c.XChangeProperty(display, root, net_supported, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&net_atoms), net_atoms.len);
+
+    return check;
+}

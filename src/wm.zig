@@ -1,11 +1,12 @@
 const std = @import("std");
 const c = @import("c.zig");
-const C = @import("cursors.zig");
 
 const log = std.log.scoped(.wm);
 
 const Layout = @import("layout.zig").Layout;
-const Atoms = @import("atoms.zig").Atoms;
+
+const A = @import("atoms.zig");
+const C = @import("cursors.zig");
 
 pub const WM = struct {
     const Self = @This();
@@ -30,7 +31,7 @@ pub const WM = struct {
         wm.x_root = c.XDefaultRootWindow(wm.x_display);
 
         wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
-        wm.ewmh_check = Atoms.init(wm.x_display, wm.x_root);
+        wm.ewmh_check = A.init(wm.x_display, wm.x_root);
 
         C.init(wm.x_display);
 
