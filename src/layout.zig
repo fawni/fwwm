@@ -1,6 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig");
 const clients = @import("clients.zig");
+const ipc = @import("ipc.zig");
 
 const A = @import("atoms.zig");
 const C = @import("cursors.zig");
@@ -170,22 +171,22 @@ pub const Layout = struct {
     }
 
     pub fn on_enter_notify(self: *Self, event: *c.XCrossingEvent) void {
-        // log.debug("entered a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.hover_color);
     }
 
     pub fn on_leave_notify(self: *Self, event: *c.XCrossingEvent) void {
-        // log.debug("left a window", .{});
         const node = self.node_from_window(event.window);
         if (node != self.focused_client) _ = c.XSetWindowBorder(self.x_display, event.window, self.normal_color);
     }
 
     pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
-        _ = self;
-
         if (event.message_type == A.fwwm_client_event) {
             log.debug("hi cherry :)", .{});
+
+            if (self.focused_client) |node| {
+                ipc.handle(node, event.data.l);
+            }
         }
     }
 

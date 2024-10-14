@@ -57,4 +57,12 @@ pub const Client = struct {
     pub fn set_input(self: *Self) void {
         _ = c.XSetInputFocus(self.x_display, self.window, c.RevertToParent, c.CurrentTime);
     }
+
+    pub fn close(self: *Self) void {
+        _ = c.XDestroyWindow(self.x_display, self.window);
+    }
+
+    pub fn kill(self: *Self) void {
+        _ = c.XKillClient(self.x_display, self.window);
+    }
 };

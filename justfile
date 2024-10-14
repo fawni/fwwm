@@ -13,7 +13,7 @@ release: (set-version)
 width := "1280"
 height := "720"
 
-@dev: (build)
+@dev: (build) (cherry)
     startx ./dots/xinitrc -- $(which Xephyr) -ac -screen {{width}}x{{height}} -reset
 
 cherry:

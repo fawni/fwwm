@@ -22,7 +22,7 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
     net_wm_check = c.XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", c.False);
     net_wm_name = c.XInternAtom(display, "_NET_WM_NAME", c.False);
 
-    fwwm_client_event = c.XInternAtom(display, "FWWM_CLIENT_EVENT", c.False);
+    fwwm_client_event = c.XInternAtom(display, "FWWM_CHERRY_EVENT", c.False);
 
     const net_atoms = [_]c.Atom{
         net_supported,
