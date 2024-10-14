@@ -88,8 +88,6 @@ pub const Layout = struct {
         log.debug("a window was unmapped: {}", .{event.window});
 
         if (self.node_from_window(event.window)) |node| {
-            self.clients.remove(node);
-
             if (self.focused_client == node) {
                 self.focus(null);
             }
