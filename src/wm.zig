@@ -25,7 +25,7 @@ pub const WM = struct {
 
         wm.allocator = allocator;
 
-        wm.x_display = c.XOpenDisplay(0) orelse std.process.exit(1);
+        wm.x_display = c.XOpenDisplay(null) orelse std.process.exit(1);
         wm.x_screen = c.XDefaultScreenOfDisplay(wm.x_display);
         wm.x_root = c.XDefaultRootWindow(wm.x_display);
 
