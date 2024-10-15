@@ -26,6 +26,10 @@ struct CherryArgs {
     /// Command to run
     #[command(subcommand)]
     command: IPCCommand,
+
+    /// Window to send the command to
+    #[arg(short, long, global = true)]
+    window: Option<i64>,
 }
 
 #[derive(Subcommand, Clone, Copy)]
@@ -38,6 +42,9 @@ enum IPCCommand {
 
     /// Moves the current window to an absolute position
     Move { x: i64, y: i64 },
+
+    /// Resize the current window
+    Resize { width: i64, height: i64 },
 }
 
 // sadly #[repr(i64)] doesn't work with non-unit enum variants
@@ -47,19 +54,22 @@ impl From<IPCCommand> for i64 {
             IPCCommand::Close => 0,
             IPCCommand::Kill => 1,
             IPCCommand::Move { .. } => 2,
+            IPCCommand::Resize { .. } => 3,
         }
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = CherryArgs::parse();
+
     unsafe {
-        send_command(CherryArgs::parse().command)?;
+        send_command(args.command, args.window)?;
     }
 
     Ok(())
 }
 
-unsafe fn send_command(command: IPCCommand) -> Result<(), Box<dyn std::error::Error>> {
+unsafe fn send_command(command: IPCCommand, window: Option<i64>) -> Result<(), Box<dyn std::error::Error>> {
     let xlib = Xlib::open()?;
 
     let display = (xlib.XOpenDisplay)(ptr::null());
@@ -72,9 +82,20 @@ unsafe fn send_command(command: IPCCommand) -> Result<(), Box<dyn std::error::Er
     let mut msg_data = ClientMessageData::new();
     msg_data.set_long(0, command.into());
 
-    if let IPCCommand::Move { x, y } = command {
-        msg_data.set_long(1, x);
-        msg_data.set_long(2, y);
+    match command {
+        IPCCommand::Move { x, y } => {
+            msg_data.set_long(1, x);
+            msg_data.set_long(2, y);
+        }
+        IPCCommand::Resize { width, height } => {
+            msg_data.set_long(1, width);
+            msg_data.set_long(2, height);
+        }
+        _ => (),
+    }
+
+    if let Some(window) = window {
+        msg_data.set_long(4, window);
     }
 
     let atom_str = CString::new("FWWM_CHERRY_EVENT")?;

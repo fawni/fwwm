@@ -142,9 +142,6 @@ pub const Layout = struct {
                                 const new_y = old_client_y + (e.xmotion.y - pointer_y);
 
                                 node.data.move(new_x, new_y);
-
-                                node.data.x = new_x;
-                                node.data.y = new_y;
                             },
                             else => {},
                         }
@@ -182,7 +179,11 @@ pub const Layout = struct {
 
     pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
         if (event.message_type == A.fwwm_client_event) {
-            // log.debug("hi cherry :)", .{});
+            if (self.node_from_window(@intCast(event.data.l[4]))) |node| {
+                ipc.handle(node, event.data.l);
+
+                return;
+            }
 
             if (self.focused_client) |node| {
                 ipc.handle(node, event.data.l);

@@ -28,6 +28,8 @@ pub const Client = struct {
 
     pub fn move(self: *Self, x: c_int, y: c_int) void {
         _ = c.XMoveWindow(self.x_display, self.window, x, y);
+        self.x = x;
+        self.y = y;
     }
 
     pub fn resize(self: *Self, width: c_uint, height: c_uint) void {
