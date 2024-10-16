@@ -34,17 +34,17 @@ struct CherryArgs {
 
 #[derive(Subcommand, Clone, Copy)]
 enum IPCCommand {
-    /// Closes the current window
+    /// Close the current window
     Close,
 
-    /// Kills the current window, terminating the process
+    /// Kill the current window, terminating the process
     Kill,
 
-    /// Moves the current window to an absolute position
+    /// Move the current window to an absolute position
     Move {
-        /// The window's horizontal position
+        /// The window's starting horizontal position
         x: i64,
-        /// The window's vertical position
+        /// The window's starting vertical position
         y: i64,
     },
 
@@ -56,13 +56,13 @@ enum IPCCommand {
         height: i64,
     },
 
-    /// Maximizes the current window
+    /// Maximize the current window
     Maximize {
         /// Set a value or leave empty to toggle
         state: Option<bool>,
     },
 
-    /// Makes the current window fullscreen, removing any decorations
+    /// Make the current window fullscreen, removing any decorations
     Fullscreen {
         /// Set a value or leave empty to toggle
         state: Option<bool>,
