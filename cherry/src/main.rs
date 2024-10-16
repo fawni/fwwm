@@ -11,7 +11,7 @@ use x11_dl::xlib::{
 
 const CLIENT_MESSAGE: i32 = 33;
 
-fn clap_style() -> Styles {
+const fn clap_style() -> Styles {
     Styles::styled()
         .header(AnsiColor::Yellow.on_default())
         .usage(AnsiColor::Yellow.on_default())
@@ -100,9 +100,7 @@ unsafe fn send_command(
     let xlib = Xlib::open()?;
 
     let display = (xlib.XOpenDisplay)(ptr::null());
-    if display.is_null() {
-        panic!("XOpenDisplay failed.");
-    }
+    assert!(!display.is_null(), "XOpenDisplay failed.");
 
     let root = (xlib.XDefaultRootWindow)(display);
 
@@ -118,22 +116,13 @@ unsafe fn send_command(
             msg_data.set_long(1, width);
             msg_data.set_long(2, height);
         }
-        IPCCommand::Maximize { state: yes } => {
-            let value = match yes {
+        IPCCommand::Maximize { state } | IPCCommand::Fullscreen { state } => {
+            let value = match state {
                 Some(false) => 0,
                 Some(true) => 1,
                 None => 2,
             };
-            msg_data.set_long(1, value)
-        }
-        IPCCommand::Fullscreen { state: yes } => {
-            let value = match yes {
-                Some(false) => 0,
-                Some(true) => 1,
-                None => 2,
-            };
-
-            msg_data.set_long(1, value)
+            msg_data.set_long(1, value);
         }
         _ => (),
     }
