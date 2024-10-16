@@ -51,8 +51,10 @@ pub const Client = struct {
         self.height = @intCast(height);
     }
 
-    pub fn maximize(self: *Self) void {
-        if (self.is_maximized) {
+    // TODO: maybe support `_NET_WM_STATE_MAXIMIZED_HORZ` and `_NET_WM_STATE_MAXIMIZED_VERT`.
+    // dwm does not support it so it should be fine if we don't.
+    pub fn maximize(self: *Self, state: ?bool) void {
+        if (state == false or self.is_maximized) {
             self.width = self.prev_width.?;
             self.height = self.prev_height.?;
             self.x = self.prev_x.?;
@@ -61,7 +63,7 @@ pub const Client = struct {
             _ = c.XMoveResizeWindow(self.x_display, self.window, self.x, self.y, @intCast(self.width), @intCast(self.height));
 
             self.is_maximized = false;
-        } else {
+        } else if (state == true or !self.is_fullscreen) {
             self.prev_width = self.width;
             self.prev_height = self.height;
             self.prev_x = self.x;
@@ -81,8 +83,8 @@ pub const Client = struct {
         }
     }
 
-    pub fn fullscreen(self: *Self) void {
-        if (self.is_fullscreen) {
+    pub fn fullscreen(self: *Self, state: ?bool) void {
+        if (state == false or self.is_fullscreen) {
             self.width = self.prev_width.?;
             self.height = self.prev_height.?;
             self.x = self.prev_x.?;
@@ -93,7 +95,7 @@ pub const Client = struct {
 
             self.is_fullscreen = false;
             _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&A.net_wm_state_fullscreen), c.False);
-        } else {
+        } else if (state == true or !self.is_fullscreen) {
             self.prev_width = self.width;
             self.prev_height = self.height;
             self.prev_x = self.x;

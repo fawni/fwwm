@@ -184,15 +184,20 @@ pub const Layout = struct {
     }
 
     pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
+        const data = event.data.l;
         if (event.message_type == A.fwwm_client_event) {
-            if (self.node_from_window(@intCast(event.data.l[4]))) |node| {
-                ipc.handle(node, event.data.l);
+            if (self.focused_client) |node| return ipc.handle(node, data);
+            if (self.node_from_window(@intCast(data[4]))) |node| return ipc.handle(node, data);
+        } else if (event.message_type == A.net_wm_state) {
+            const node = self.node_from_window(event.window) orelse return;
 
-                return;
-            }
-
-            if (self.focused_client) |node| {
-                ipc.handle(node, event.data.l);
+            if (data[1] == A.net_wm_state_fullscreen or data[2] == A.net_wm_state_fullscreen) {
+                switch (data[0]) {
+                    0 => node.data.fullscreen(false),
+                    1 => node.data.fullscreen(true),
+                    2 => node.data.fullscreen(null),
+                    else => {},
+                }
             }
         }
     }

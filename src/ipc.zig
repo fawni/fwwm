@@ -22,8 +22,8 @@ pub fn handle(node: *Node, data: [5]c_long) void {
         @intFromEnum(IPCCommand.Kill) => kill(node),
         @intFromEnum(IPCCommand.Move) => move(node, data[1], data[2]),
         @intFromEnum(IPCCommand.Resize) => resize(node, data[1], data[2]),
-        @intFromEnum(IPCCommand.Maximize) => maximize(node),
-        @intFromEnum(IPCCommand.Fullscreen) => fullscreen(node),
+        @intFromEnum(IPCCommand.Maximize) => maximize(node, data[1]),
+        @intFromEnum(IPCCommand.Fullscreen) => fullscreen(node, data[1]),
         else => {},
     }
 }
@@ -44,10 +44,22 @@ fn resize(node: *Node, width: c_long, height: c_long) void {
     node.data.resize(@intCast(width), @intCast(height));
 }
 
-fn maximize(node: *Node) void {
-    node.data.maximize();
+fn maximize(node: *Node, value: c_long) void {
+    const state = switch (value) {
+        0 => false,
+        1 => true,
+        else => null,
+    };
+
+    node.data.maximize(state);
 }
 
-fn fullscreen(node: *Node) void {
-    node.data.fullscreen();
+fn fullscreen(node: *Node, value: c_long) void {
+    const state = switch (value) {
+        0 => false,
+        1 => true,
+        else => null,
+    };
+
+    node.data.fullscreen(state);
 }
