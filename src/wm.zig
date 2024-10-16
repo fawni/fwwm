@@ -1,12 +1,12 @@
 const std = @import("std");
 const c = @import("c.zig");
 
+const A = @import("atoms.zig");
+const C = @import("cursors.zig");
+
 const log = std.log.scoped(.wm);
 
 const Layout = @import("layout.zig").Layout;
-
-const A = @import("atoms.zig");
-const C = @import("cursors.zig");
 
 pub const WM = struct {
     const Self = @This();

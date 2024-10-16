@@ -12,6 +12,8 @@ pub const IPCCommand = enum {
     Kill,
     Move,
     Resize,
+    Maximize,
+    Fullscreen,
 };
 
 pub fn handle(node: *Node, data: [5]c_long) void {
@@ -20,6 +22,8 @@ pub fn handle(node: *Node, data: [5]c_long) void {
         @intFromEnum(IPCCommand.Kill) => kill(node),
         @intFromEnum(IPCCommand.Move) => move(node, data[1], data[2]),
         @intFromEnum(IPCCommand.Resize) => resize(node, data[1], data[2]),
+        @intFromEnum(IPCCommand.Maximize) => maximize(node),
+        @intFromEnum(IPCCommand.Fullscreen) => fullscreen(node),
         else => {},
     }
 }
@@ -38,4 +42,12 @@ fn move(node: *Node, x: c_long, y: c_long) void {
 
 fn resize(node: *Node, width: c_long, height: c_long) void {
     node.data.resize(@intCast(width), @intCast(height));
+}
+
+fn maximize(node: *Node) void {
+    node.data.maximize();
+}
+
+fn fullscreen(node: *Node) void {
+    node.data.fullscreen();
 }

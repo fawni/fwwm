@@ -37,7 +37,7 @@ enum IPCCommand {
     /// Closes the current window
     Close,
 
-    /// Kills the current window, this terminates the process
+    /// Kills the current window, terminating the process
     Kill,
 
     /// Moves the current window to an absolute position
@@ -45,6 +45,12 @@ enum IPCCommand {
 
     /// Resize the current window
     Resize { width: i64, height: i64 },
+
+    /// Maximizes the current window
+    Maximize,
+
+    /// Makes the current window fullscreen, removing any decorations
+    Fullscreen,
 }
 
 // sadly #[repr(i64)] doesn't work with non-unit enum variants
@@ -55,6 +61,8 @@ impl From<IPCCommand> for i64 {
             IPCCommand::Kill => 1,
             IPCCommand::Move { .. } => 2,
             IPCCommand::Resize { .. } => 3,
+            IPCCommand::Maximize => 4,
+            IPCCommand::Fullscreen => 5,
         }
     }
 }

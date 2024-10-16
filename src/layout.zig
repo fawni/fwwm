@@ -31,6 +31,8 @@ pub const Layout = struct {
     hover_color: u32,
     focus_color: u32,
 
+    border_width: u8,
+
     pub fn init(allocator: *std.mem.Allocator, display: *c.Display, root: c.Window) !Self {
         var layout: Self = undefined;
 
@@ -50,6 +52,8 @@ pub const Layout = struct {
         layout.normal_color = 0x909090;
         layout.hover_color = 0x97d0e8;
         layout.focus_color = 0xd895ee;
+
+        layout.border_width = 2;
 
         return layout;
     }
@@ -80,7 +84,9 @@ pub const Layout = struct {
         _ = c.XGrabButton(self.x_display, c.Button1, c.AnyModifier, event.window, c.True, M.POINTER_MASK, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
         _ = c.XGrabButton(self.x_display, c.Button3, c.AnyModifier, event.window, c.True, M.POINTER_MASK, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
 
-        _ = c.XSetWindowBorderWidth(self.x_display, event.window, 2);
+        _ = c.XSetWindowBorderWidth(self.x_display, event.window, self.border_width);
+
+        _ = c.XChangeProperty(self.x_display, event.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, null, c.False);
 
         const node = try self.add_client(event.window);
         self.focus(node);
@@ -205,6 +211,9 @@ pub const Layout = struct {
             .y = attributes.y,
             .width = attributes.width,
             .height = attributes.height,
+            .screen_width = self.screen_width,
+            .screen_height = self.screen_height,
+            .border_width = self.border_width,
         };
 
         var node = try self.allocator.create(ClientList.Node);
