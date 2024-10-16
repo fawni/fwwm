@@ -1,10 +1,10 @@
 # cherry
 
-A client for communicating with [fwwm](..)
+A client for communicating with [fwwm](..).
 
 ![scrot](scrot.png)
 
-same functionality as [bspc](https://github.com/baskerville/bspwm), works exactly like [berryc](https://berrywm.org)
+same functionality as [bspc](https://github.com/baskerville/bspwm), works exactly like [berryc](https://berrywm.org).
 
 # license
 

@@ -6,6 +6,8 @@ a KISS floating x11 window manager fueled by coffee and cherry pies.
 
 ![scrot](./dots/scrot.png)
 
+fwwm can be controlled with [cherry](cherry).
+
 ## why
 
 i saw the abbreviation of David Lynch’s film [Twin Peaks: Fire Walk with
