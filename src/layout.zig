@@ -49,7 +49,7 @@ pub const Layout = struct {
         layout.clients = ClientList{};
         layout.focused_client = null;
 
-        layout.normal_color = 0x909090;
+        layout.normal_color = 0x303030;
         layout.hover_color = 0x97d0e8;
         layout.focus_color = 0xd895ee;
 
