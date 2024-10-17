@@ -41,14 +41,25 @@ pub const Client = struct {
 
     pub fn move(self: *Self, x: c_int, y: c_int) void {
         _ = c.XMoveWindow(self.x_display, self.window, x, y);
+
         self.x = x;
         self.y = y;
     }
 
     pub fn resize(self: *Self, width: c_uint, height: c_uint) void {
         _ = c.XResizeWindow(self.x_display, self.window, width, height);
+
         self.width = @intCast(width);
         self.height = @intCast(height);
+    }
+
+    pub fn move_resize(self: *Self, x: c_int, y: c_int, width: c_int, height: c_int) void {
+        _ = c.XMoveResizeWindow(self.x_display, self.window, x, y, @intCast(width), @intCast(height));
+
+        self.x = x;
+        self.y = y;
+        self.width = width;
+        self.height = height;
     }
 
     // TODO: maybe support `_NET_WM_STATE_MAXIMIZED_HORZ` and `_NET_WM_STATE_MAXIMIZED_VERT`.

@@ -132,10 +132,12 @@ pub const Layout = struct {
             if (event.state & c.Mod4Mask != 0) {
                 self.grab_pointer();
 
-                const old_client_x = node.data.x;
-                const old_client_y = node.data.y;
-                const old_client_width = node.data.width;
-                const old_client_height = node.data.height;
+                const old_x = node.data.x;
+                const old_y = node.data.y;
+                const old_width = node.data.width;
+                const old_height = node.data.height;
+                const old_x2 = old_x + old_width;
+                const old_y2 = old_y + old_height;
 
                 var e: c.XEvent = undefined;
                 while (e.type != c.ButtonRelease) {
@@ -144,8 +146,8 @@ pub const Layout = struct {
                     if (e.xbutton.state & c.Button1Mask != 0) {
                         switch (e.type) {
                             c.MotionNotify => {
-                                const new_x = old_client_x + (e.xmotion.x - pointer_x);
-                                const new_y = old_client_y + (e.xmotion.y - pointer_y);
+                                const new_x = old_x + (e.xmotion.x - pointer_x);
+                                const new_y = old_y + (e.xmotion.y - pointer_y);
 
                                 node.data.move(new_x, new_y);
                             },
@@ -153,15 +155,45 @@ pub const Layout = struct {
                         }
                     } else if (e.xbutton.state & c.Button3Mask != 0) {
                         // resize
-                        // TODO: change position of resize based on the closest corner to the pointer.
                         switch (e.type) {
                             c.MotionNotify => {
-                                var new_width = e.xmotion.x - pointer_x + old_client_width;
-                                var new_height = e.xmotion.y - pointer_y + old_client_height;
-                                if (new_width < 1) new_width = 1;
-                                if (new_height < 1) new_height = 1;
+                                const half_x: c_int = @divTrunc(node.data.x + node.data.width, 2);
+                                const half_y: c_int = @divTrunc(node.data.y + node.data.height, 2);
 
-                                node.data.resize(@intCast(new_width), @intCast(new_height));
+                                // is this lazily evaluated? i hope i'm not checking all conditions every time...
+                                const bottom_right_or_center = pointer_x >= half_x and pointer_y >= half_y;
+                                const bottom_left = pointer_x < half_x and pointer_y > half_y;
+                                const top_right = pointer_x > half_x and pointer_y < half_y;
+                                const top_left = pointer_x < half_x and pointer_y < half_y;
+
+                                if (bottom_right_or_center) {
+                                    const new_width = @max(e.xmotion.x - pointer_x + old_width, 1);
+                                    const new_height = @max(e.xmotion.y - pointer_y + old_height, 1);
+
+                                    node.data.resize(@intCast(new_width), @intCast(new_height));
+                                } else if (bottom_left) {
+                                    const new_x = e.xmotion.x - pointer_x + old_x;
+
+                                    const new_width = @max(old_x2 - new_x, 1);
+                                    const new_height = @max(e.xmotion.y - pointer_y + old_height, 1);
+
+                                    node.data.move_resize(new_x, old_y, new_width, new_height);
+                                } else if (top_right) {
+                                    const new_y = e.xmotion.y - pointer_y + old_y;
+
+                                    const new_width = @max(e.xmotion.x - pointer_x + old_width, 1);
+                                    const new_height = @max(old_y2 - new_y, 1);
+
+                                    node.data.move_resize(old_x, new_y, new_width, new_height);
+                                } else if (top_left) {
+                                    const new_x = e.xmotion.x - pointer_x + old_x;
+                                    const new_y = e.xmotion.y - pointer_y + old_y;
+
+                                    const new_width = @max(old_x2 - new_x, 1);
+                                    const new_height = @max(old_y2 - new_y, 1);
+
+                                    node.data.move_resize(new_x, new_y, new_width, new_height);
+                                }
                             },
                             else => {},
                         }

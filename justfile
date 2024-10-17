@@ -13,11 +13,13 @@ release: (set-version)
 width := "1280"
 height := "720"
 
-@dev: (build) (cherry)
+@dev: (build)
     startx ./dots/xinitrc -- $(which Xephyr) -ac -screen {{width}}x{{height}} -reset
 
 cherry:
     cargo install --path cherry
+
+@dev-cherry: (cherry) (dev)
 
 install: (release) && (cherry)
     sudo cp ./zig-out/bin/fwwm /usr/bin/fwwm
