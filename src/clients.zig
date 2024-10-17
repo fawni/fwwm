@@ -21,10 +21,10 @@ pub const Client = struct {
     width: c_int,
     height: c_int,
 
-    prev_width: ?c_int = null,
-    prev_height: ?c_int = null,
     prev_x: ?c_int = null,
     prev_y: ?c_int = null,
+    prev_width: ?c_int = null,
+    prev_height: ?c_int = null,
 
     screen_width: c_uint,
     screen_height: c_uint,

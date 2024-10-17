@@ -170,7 +170,7 @@ pub const Layout = struct {
                                     const new_width = @max(e.xmotion.x - pointer_x + old_width, 1);
                                     const new_height = @max(e.xmotion.y - pointer_y + old_height, 1);
 
-                                    node.data.resize(@intCast(new_width), @intCast(new_height));
+                                    node.data.resize(new_width, new_height);
                                 } else if (bottom_left) {
                                     const new_x = e.xmotion.x - pointer_x + old_x;
 
