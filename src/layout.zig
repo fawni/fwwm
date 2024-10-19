@@ -234,7 +234,6 @@ pub const Layout = struct {
 
     pub fn add_client(self: *Self, window: c.Window) !*ClientList.Node {
         if (self.node_from_window(window)) |node| return node;
-        // log.debug("adding window to managed clients: {}", .{window});
 
         var attributes: c.XWindowAttributes = undefined;
         _ = c.XGetWindowAttributes(self.x_display, window, &attributes);
@@ -257,6 +256,7 @@ pub const Layout = struct {
 
         node.data = client;
         self.clients.append(node);
+        try self.ewmh_set_client_list();
 
         return node;
     }
@@ -289,6 +289,15 @@ pub const Layout = struct {
     fn propagate_pointer(self: *Self) void {
         _ = c.XAllowEvents(self.x_display, c.ReplayPointer, c.CurrentTime);
         _ = c.XSync(self.x_display, c.False);
+    }
+
+    fn ewmh_set_client_list(self: *Self) !void {
+        _ = c.XDeleteProperty(self.x_display, self.x_root, A.net_client_list);
+
+        var next = self.clients.first;
+        while (next) |node| : (next = node.next) {
+            _ = c.XChangeProperty(self.x_display, self.x_root, A.net_client_list, c.XA_WINDOW, c.XA_VISUALID, c.PropModeAppend, @ptrCast(&node.data.window), 1);
+        }
     }
 
     fn node_from_window(self: *Self, window: c.Window) ?*ClientList.Node {

@@ -74,7 +74,7 @@ pub const Client = struct {
         self.height = height;
     }
 
-    pub fn set_state(self: *Self, atom: c.Atom, data: c.Bool) void {
+    pub fn ewmh_set_state(self: *Self, atom: c.Atom, data: c.Bool) void {
         _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&atom), data);
     }
 
@@ -87,7 +87,7 @@ pub const Client = struct {
             self.x = self.prev_x.?;
             self.y = self.prev_y.?;
 
-            _ = c.XMoveResizeWindow(self.x_display, self.window, self.x, self.y, @intCast(self.width), @intCast(self.height));
+            self.move_resize(self.x, self.y, self.width, self.height);
 
             self.is_maximized = false;
         } else if (state == true or !self.is_fullscreen) {
@@ -121,7 +121,7 @@ pub const Client = struct {
             self.set_border_width(self.border_width);
 
             self.is_fullscreen = false;
-            self.set_state(A.net_wm_state_fullscreen, c.False);
+            self.ewmh_set_state(A.net_wm_state_fullscreen, c.False);
         } else if (state == true or !self.is_fullscreen) {
             self.prev_width = self.width;
             self.prev_height = self.height;
@@ -137,7 +137,7 @@ pub const Client = struct {
             self.y = 0;
 
             self.is_fullscreen = true;
-            self.set_state(A.net_wm_state_fullscreen, c.True);
+            self.ewmh_set_state(A.net_wm_state_fullscreen, c.True);
         }
     }
 
@@ -157,10 +157,10 @@ pub const Client = struct {
         self.raise();
         self.set_input();
         self.set_border_color(self.focus_color);
-        self.set_active();
+        self.ewmh_set_active();
     }
 
-    pub fn set_active(self: *Self) void {
+    pub fn ewmh_set_active(self: *Self) void {
         _ = c.XChangeProperty(self.x_display, self.x_root, A.net_active_window, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&self.window), 1);
     }
 
@@ -168,7 +168,7 @@ pub const Client = struct {
         if (self.is_hidden) return;
 
         self.unmap();
-        self.set_state(A.net_wm_state_hidden, c.True);
+        self.ewmh_set_state(A.net_wm_state_hidden, c.True);
         self.is_hidden = true;
     }
 
@@ -176,7 +176,7 @@ pub const Client = struct {
         if (!self.is_hidden) return;
 
         self.map();
-        self.set_state(A.net_wm_state_hidden, c.False);
+        self.ewmh_set_state(A.net_wm_state_hidden, c.False);
         self.is_hidden = false;
     }
 
