@@ -11,6 +11,7 @@ pub const Client = struct {
     const Self = @This();
 
     x_display: *c.Display,
+    x_root: c.Window,
 
     window: c.Window,
 
@@ -31,13 +32,24 @@ pub const Client = struct {
 
     border_width: u8,
 
+    focus_color: u32,
+
     // decorated: bool,
     // decoration: c.Window,
 
     is_maximized: bool = false,
     is_fullscreen: bool = false,
+    is_hidden: bool = false,
 
     // workspace: u8,
+
+    pub fn map(self: *Self) void {
+        _ = c.XMapWindow(self.x_display, self.window);
+    }
+
+    pub fn unmap(self: *Self) void {
+        _ = c.XUnmapWindow(self.x_display, self.window);
+    }
 
     pub fn move(self: *Self, x: c_int, y: c_int) void {
         _ = c.XMoveWindow(self.x_display, self.window, x, y);
@@ -60,6 +72,10 @@ pub const Client = struct {
         self.y = y;
         self.width = width;
         self.height = height;
+    }
+
+    pub fn set_state(self: *Self, atom: c.Atom, data: c.Bool) void {
+        _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&atom), data);
     }
 
     // TODO: maybe support `_NET_WM_STATE_MAXIMIZED_HORZ` and `_NET_WM_STATE_MAXIMIZED_VERT`.
@@ -101,30 +117,27 @@ pub const Client = struct {
             self.x = self.prev_x.?;
             self.y = self.prev_y.?;
 
-            _ = c.XMoveResizeWindow(self.x_display, self.window, self.x, self.y, @intCast(self.width), @intCast(self.height));
-            _ = c.XSetWindowBorderWidth(self.x_display, self.window, self.border_width);
+            self.move_resize(self.x, self.y, self.width, self.height);
+            self.set_border_width(self.border_width);
 
             self.is_fullscreen = false;
-            _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&A.net_wm_state_fullscreen), c.False);
+            self.set_state(A.net_wm_state_fullscreen, c.False);
         } else if (state == true or !self.is_fullscreen) {
             self.prev_width = self.width;
             self.prev_height = self.height;
             self.prev_x = self.x;
             self.prev_y = self.y;
 
-            const new_width: c_uint = @intCast(self.screen_width);
-            const new_height: c_uint = @intCast(self.screen_height);
+            self.move_resize(0, 0, @intCast(self.screen_width), @intCast(self.screen_height));
+            self.set_border_width(0);
 
-            _ = c.XMoveResizeWindow(self.x_display, self.window, 0, 0, new_width, new_height);
-            _ = c.XSetWindowBorderWidth(self.x_display, self.window, 0);
-
-            self.width = @intCast(new_width);
-            self.height = @intCast(new_height);
+            self.width = @intCast(self.screen_width);
+            self.height = @intCast(self.screen_height);
             self.x = 0;
             self.y = 0;
 
             self.is_fullscreen = true;
-            _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&A.net_wm_state_fullscreen), c.True);
+            self.set_state(A.net_wm_state_fullscreen, c.True);
         }
     }
 
@@ -140,10 +153,31 @@ pub const Client = struct {
         _ = c.XSetWindowBorderWidth(self.x_display, self.window, width);
     }
 
-    pub fn focus(self: *Self, color: u32) void {
+    pub fn focus(self: *Self) void {
         self.raise();
         self.set_input();
-        self.set_border_color(color);
+        self.set_border_color(self.focus_color);
+        self.set_active();
+    }
+
+    pub fn set_active(self: *Self) void {
+        _ = c.XChangeProperty(self.x_display, self.x_root, A.net_active_window, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&self.window), 1);
+    }
+
+    pub fn hide(self: *Self) void {
+        if (self.is_hidden) return;
+
+        self.unmap();
+        self.set_state(A.net_wm_state_hidden, c.True);
+        self.is_hidden = true;
+    }
+
+    pub fn show(self: *Self) void {
+        if (!self.is_hidden) return;
+
+        self.map();
+        self.set_state(A.net_wm_state_hidden, c.False);
+        self.is_hidden = false;
     }
 
     pub fn set_input(self: *Self) void {

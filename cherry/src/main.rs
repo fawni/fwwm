@@ -67,6 +67,12 @@ enum IPCCommand {
         /// Set a value or leave empty to toggle
         state: Option<bool>,
     },
+
+    /// Hide the current window
+    Hide,
+
+    /// Unhide the current window
+    Show,
 }
 
 // sadly #[repr(i64)] doesn't work with non-unit enum variants
@@ -79,6 +85,8 @@ impl From<IPCCommand> for i64 {
             IPCCommand::Resize { .. } => 3,
             IPCCommand::Maximize { .. } => 4,
             IPCCommand::Fullscreen { .. } => 5,
+            IPCCommand::Hide => 6,
+            IPCCommand::Show => 7,
         }
     }
 }

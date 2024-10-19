@@ -25,7 +25,7 @@ pub const Layout = struct {
     screen_height: c_uint,
 
     clients: ClientList,
-    focused_client: ?*ClientList.Node,
+    focused_client: ?*ClientList.Node = null,
 
     normal_color: u32,
     hover_color: u32,
@@ -47,7 +47,6 @@ pub const Layout = struct {
         layout.screen_height = @intCast(c.XDisplayHeight(display, screen));
 
         layout.clients = ClientList{};
-        layout.focused_client = null;
 
         layout.normal_color = 0x303030;
         layout.hover_color = 0x97d0e8;
@@ -160,7 +159,6 @@ pub const Layout = struct {
                                 const half_x: c_int = @divTrunc(node.data.x + node.data.width, 2);
                                 const half_y: c_int = @divTrunc(node.data.y + node.data.height, 2);
 
-                                // is this lazily evaluated? i hope i'm not checking all conditions every time...
                                 const bottom_right_or_center = pointer_x >= half_x and pointer_y >= half_y;
                                 const bottom_left = pointer_x < half_x and pointer_y > half_y;
                                 const top_right = pointer_x > half_x and pointer_y < half_y;
@@ -218,8 +216,8 @@ pub const Layout = struct {
     pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
         const data = event.data.l;
         if (event.message_type == A.fwwm_client_event) {
-            if (self.focused_client) |node| return ipc.handle(node, data);
             if (self.node_from_window(@intCast(data[4]))) |node| return ipc.handle(node, data);
+            if (self.focused_client) |node| return ipc.handle(node, data);
         } else if (event.message_type == A.net_wm_state) {
             const node = self.node_from_window(event.window) orelse return;
 
@@ -243,6 +241,7 @@ pub const Layout = struct {
 
         const client = Client{
             .x_display = self.x_display,
+            .x_root = self.x_root,
             .window = window,
             .x = attributes.x,
             .y = attributes.y,
@@ -251,6 +250,7 @@ pub const Layout = struct {
             .screen_width = self.screen_width,
             .screen_height = self.screen_height,
             .border_width = self.border_width,
+            .focus_color = self.focus_color,
         };
 
         var node = try self.allocator.create(ClientList.Node);
@@ -267,7 +267,7 @@ pub const Layout = struct {
         if (node orelse self.clients.last orelse self.clients.first) |target_node| {
             if (self.focused_client == target_node) return;
 
-            target_node.data.focus(self.focus_color);
+            target_node.data.focus();
 
             if (self.focused_client) |old_node| if (self.node_exists(old_node)) {
                 old_node.data.set_border_color(self.normal_color);
