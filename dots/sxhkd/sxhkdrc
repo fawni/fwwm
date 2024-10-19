@@ -1,11 +1,22 @@
 super + Return
-    tty.sh
+    ./dots/tty.sh
 super + d
     rofi -show drun
 super + w
     rofi -show window
 super + {q,shift + q}
     cherry {close,kill}
+super + f
+    cherry fullscreen
+super + m
+    cherry maximize
+
+super + {_,shift + }{1-9,0}
+    cherry {switch-workspace,send-to-workspace} {0-8,9}
+super + ctrl + {1-9,0}
+    ws={0-8,9};\
+    cherry send-to-workspace $ws;\
+    cherry switch-workspace $ws
 
 super + Escape
     pkill -USR1 -x sxhkd

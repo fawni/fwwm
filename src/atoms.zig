@@ -7,8 +7,10 @@ pub var utf8string: c.Atom = undefined;
 pub var net_supported: c.Atom = undefined;
 pub var net_wm_check: c.Atom = undefined;
 pub var net_wm_name: c.Atom = undefined;
-pub var net_active_window: c.Atom = undefined;
 pub var net_client_list: c.Atom = undefined;
+pub var net_active_window: c.Atom = undefined;
+pub var net_current_desktop: c.Atom = undefined;
+pub var net_number_of_desktops: c.Atom = undefined;
 pub var net_wm_desktop: c.Atom = undefined;
 pub var net_wm_state: c.Atom = undefined;
 pub var net_wm_state_fullscreen: c.Atom = undefined;
@@ -20,6 +22,7 @@ const Self = @This();
 
 pub fn init(display: *c.Display, root: c.Window) c.Window {
     const WM_NAME = "fwwm";
+
     const check = c.XCreateSimpleWindow(display, root, 0, 0, 1, 1, 0, 0, 0);
 
     utf8string = c.XInternAtom(display, "UTF8_STRING", c.False);
@@ -27,8 +30,10 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
     net_supported = c.XInternAtom(display, "_NET_SUPPORTED", c.False);
     net_wm_check = c.XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", c.False);
     net_wm_name = c.XInternAtom(display, "_NET_WM_NAME", c.False);
-    net_active_window = c.XInternAtom(display, "_NET_ACTIVE_WINDOW", c.False);
     net_client_list = c.XInternAtom(display, "_NET_CLIENT_LIST", c.False);
+    net_active_window = c.XInternAtom(display, "_NET_ACTIVE_WINDOW", c.False);
+    net_current_desktop = c.XInternAtom(display, "_NET_CURRENT_DESKTOP", c.False);
+    net_number_of_desktops = c.XInternAtom(display, "_NET_NUMBER_OF_DESKTOPS", c.False);
     net_wm_desktop = c.XInternAtom(display, "_NET_WM_DESKTOP", c.False);
     net_wm_state = c.XInternAtom(display, "_NET_WM_STATE", c.False);
     net_wm_state_fullscreen = c.XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", c.False);
@@ -40,8 +45,10 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
         net_supported,
         net_wm_check,
         net_wm_name,
-        net_active_window,
         net_client_list,
+        net_active_window,
+        net_current_desktop,
+        net_number_of_desktops,
         net_wm_desktop,
         net_wm_state,
         net_wm_state_fullscreen,
@@ -52,6 +59,9 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
     _ = c.XChangeProperty(display, check, net_wm_name, utf8string, c.XA_CURSOR, c.PropModeReplace, WM_NAME, WM_NAME.len);
     _ = c.XChangeProperty(display, root, net_wm_check, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&check), 1);
     _ = c.XChangeProperty(display, root, net_supported, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&net_atoms), net_atoms.len);
+
+    const workspaces: c_long = 10;
+    _ = c.XChangeProperty(display, root, net_number_of_desktops, c.XA_CARDINAL, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&workspaces), 1);
 
     return check;
 }

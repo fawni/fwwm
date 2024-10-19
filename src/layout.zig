@@ -56,7 +56,7 @@ pub const Layout = struct {
 
         layout.border_width = 2;
 
-        layout.current_workspace = 0;
+        layout.set_current_desktop(0);
 
         return layout;
     }
@@ -293,6 +293,7 @@ pub const Layout = struct {
     }
 
     pub fn send_to_workspace(self: *Self, node: *ClientList.Node, workspace: u32) void {
+        if (!self.node_exists(node)) return;
         if (node.data.workspace == workspace) return;
 
         if (self.focused_client) |focused_node| if (focused_node == node) self.focus(null);
@@ -306,7 +307,7 @@ pub const Layout = struct {
     pub fn switch_workspace(self: *Self, workspace: u32) void {
         if (self.current_workspace == workspace) return;
 
-        self.current_workspace = workspace;
+        self.set_current_desktop(workspace);
 
         var next = self.clients.first;
         var focused = false;
@@ -342,6 +343,15 @@ pub const Layout = struct {
         while (next) |node| : (next = node.next) {
             _ = c.XChangeProperty(self.x_display, self.x_root, A.net_client_list, c.XA_WINDOW, c.XA_VISUALID, c.PropModeAppend, @ptrCast(&node.data.window), 1);
         }
+    }
+
+    fn set_current_desktop(self: *Self, workspace: u32) void {
+        self.current_workspace = workspace;
+        self.ewmh_set_current_desktop();
+    }
+
+    fn ewmh_set_current_desktop(self: *Self) void {
+        _ = c.XChangeProperty(self.x_display, self.x_root, A.net_current_desktop, c.XA_CARDINAL, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&self.current_workspace), 1);
     }
 
     fn node_from_window(self: *Self, window: c.Window) ?*ClientList.Node {

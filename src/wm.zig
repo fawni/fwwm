@@ -30,8 +30,9 @@ pub const WM = struct {
         wm.x_screen = c.XDefaultScreenOfDisplay(wm.x_display);
         wm.x_root = c.XDefaultRootWindow(wm.x_display);
 
-        wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
         wm.ewmh_check = A.init(wm.x_display, wm.x_root);
+
+        wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
 
         C.init(wm.x_display);
 
