@@ -25,7 +25,7 @@ pub const Layout = struct {
     screen_height: c_uint,
 
     clients: ClientList,
-    focused_client: ?*ClientList.Node = null,
+    focused_client: ?*ClientList.Node,
 
     normal_color: u32,
     hover_color: u32,
@@ -49,6 +49,7 @@ pub const Layout = struct {
         layout.screen_height = @intCast(c.XDisplayHeight(display, screen));
 
         layout.clients = ClientList{};
+        layout.focused_client = null;
 
         layout.normal_color = 0x303030;
         layout.hover_color = 0x97d0e8;
@@ -221,7 +222,7 @@ pub const Layout = struct {
         const data = event.data.l;
         if (event.message_type == A.fwwm_client_event) {
             if (self.node_from_window(@intCast(data[4]))) |node| return ipc.handle(node, data, self);
-            if (self.focused_client) |node| return ipc.handle(node, data, self);
+            if (self.focused_client) |node| ipc.handle(node, data, self);
         } else if (event.message_type == A.net_wm_state) {
             const node = self.node_from_window(event.window) orelse return;
 
