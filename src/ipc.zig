@@ -1,9 +1,8 @@
 const std = @import("std");
 const c = @import("c.zig");
-const clients = @import("clients.zig");
-const layout = @import("layout.zig");
 
-const ClientList = clients.ClientList;
+const Layout = @import("layout.zig").Layout;
+const ClientList = @import("clients.zig").ClientList;
 const Node = ClientList.Node;
 
 // TODO: order matters so organize accordingly (when we have more commands)
@@ -16,9 +15,11 @@ pub const IPCCommand = enum {
     Fullscreen,
     Hide,
     Show,
+    SendToWorkspace,
+    SwitchWorkspace,
 };
 
-pub fn handle(node: *Node, data: [5]c_long) void {
+pub fn handle(node: *Node, data: [5]c_long, layout: *Layout) void {
     switch (data[0]) {
         @intFromEnum(IPCCommand.Close) => close(node),
         @intFromEnum(IPCCommand.Kill) => kill(node),
@@ -28,6 +29,8 @@ pub fn handle(node: *Node, data: [5]c_long) void {
         @intFromEnum(IPCCommand.Fullscreen) => fullscreen(node, data[1]),
         @intFromEnum(IPCCommand.Hide) => hide(node),
         @intFromEnum(IPCCommand.Show) => show(node),
+        @intFromEnum(IPCCommand.SendToWorkspace) => send_to_workspace(node, data[1], layout),
+        @intFromEnum(IPCCommand.SwitchWorkspace) => switch_workspace(data[1], layout),
         else => {},
     }
 }
@@ -74,4 +77,12 @@ fn hide(node: *Node) void {
 
 fn show(node: *Node) void {
     node.data.show();
+}
+
+fn send_to_workspace(node: *Node, workspace: c_long, layout: *Layout) void {
+    layout.send_to_workspace(node, @intCast(workspace));
+}
+
+fn switch_workspace(workspace: c_long, layout: *Layout) void {
+    layout.switch_workspace(@intCast(workspace));
 }

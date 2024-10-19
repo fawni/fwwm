@@ -6,9 +6,10 @@ const log = std.log.scoped(.atoms);
 pub var utf8string: c.Atom = undefined;
 pub var net_supported: c.Atom = undefined;
 pub var net_wm_check: c.Atom = undefined;
+pub var net_wm_name: c.Atom = undefined;
 pub var net_active_window: c.Atom = undefined;
 pub var net_client_list: c.Atom = undefined;
-pub var net_wm_name: c.Atom = undefined;
+pub var net_wm_desktop: c.Atom = undefined;
 pub var net_wm_state: c.Atom = undefined;
 pub var net_wm_state_fullscreen: c.Atom = undefined;
 pub var net_wm_state_hidden: c.Atom = undefined;
@@ -28,6 +29,7 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
     net_wm_name = c.XInternAtom(display, "_NET_WM_NAME", c.False);
     net_active_window = c.XInternAtom(display, "_NET_ACTIVE_WINDOW", c.False);
     net_client_list = c.XInternAtom(display, "_NET_CLIENT_LIST", c.False);
+    net_wm_desktop = c.XInternAtom(display, "_NET_WM_DESKTOP", c.False);
     net_wm_state = c.XInternAtom(display, "_NET_WM_STATE", c.False);
     net_wm_state_fullscreen = c.XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", c.False);
     net_wm_state_hidden = c.XInternAtom(display, "_NET_WM_STATE_HIDDEN", c.False);
@@ -40,6 +42,7 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
         net_wm_name,
         net_active_window,
         net_client_list,
+        net_wm_desktop,
         net_wm_state,
         net_wm_state_fullscreen,
         net_wm_state_hidden,

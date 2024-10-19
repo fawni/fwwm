@@ -33,6 +33,8 @@ pub const Layout = struct {
 
     border_width: u8,
 
+    current_workspace: u32,
+
     pub fn init(allocator: *std.mem.Allocator, display: *c.Display, root: c.Window) !Self {
         var layout: Self = undefined;
 
@@ -53,6 +55,8 @@ pub const Layout = struct {
         layout.focus_color = 0xd895ee;
 
         layout.border_width = 2;
+
+        layout.current_workspace = 0;
 
         return layout;
     }
@@ -216,8 +220,8 @@ pub const Layout = struct {
     pub fn on_client_message(self: *Self, event: *c.XClientMessageEvent) void {
         const data = event.data.l;
         if (event.message_type == A.fwwm_client_event) {
-            if (self.node_from_window(@intCast(data[4]))) |node| return ipc.handle(node, data);
-            if (self.focused_client) |node| return ipc.handle(node, data);
+            if (self.node_from_window(@intCast(data[4]))) |node| return ipc.handle(node, data, self);
+            if (self.focused_client) |node| return ipc.handle(node, data, self);
         } else if (event.message_type == A.net_wm_state) {
             const node = self.node_from_window(event.window) orelse return;
 
@@ -250,6 +254,7 @@ pub const Layout = struct {
             .screen_height = self.screen_height,
             .border_width = self.border_width,
             .focus_color = self.focus_color,
+            .workspace = self.current_workspace,
         };
 
         var node = try self.allocator.create(ClientList.Node);
@@ -257,6 +262,7 @@ pub const Layout = struct {
         node.data = client;
         self.clients.append(node);
         try self.ewmh_set_client_list();
+        node.data.send_to_workspace(self.current_workspace);
 
         return node;
     }
@@ -264,7 +270,7 @@ pub const Layout = struct {
     fn focus(self: *Self, node: ?*ClientList.Node) void {
         if (self.clients.len == 0) return;
 
-        if (node orelse self.clients.last orelse self.clients.first) |target_node| {
+        if (node) |target_node| {
             if (self.focused_client == target_node) return;
 
             target_node.data.focus();
@@ -274,6 +280,44 @@ pub const Layout = struct {
             };
 
             self.focused_client = target_node;
+
+            return;
+        }
+
+        var next = self.clients.first;
+        while (next) |n| : (next = n.next) {
+            if (n.data.workspace == self.current_workspace) {
+                return self.focus(n);
+            }
+        }
+    }
+
+    pub fn send_to_workspace(self: *Self, node: *ClientList.Node, workspace: u32) void {
+        if (node.data.workspace == workspace) return;
+
+        if (self.focused_client) |focused_node| if (focused_node == node) self.focus(null);
+        node.data.send_to_workspace(workspace);
+
+        if (self.current_workspace != workspace) {
+            node.data.hide();
+        }
+    }
+
+    pub fn switch_workspace(self: *Self, workspace: u32) void {
+        if (self.current_workspace == workspace) return;
+
+        self.current_workspace = workspace;
+
+        var next = self.clients.first;
+        var focused = false;
+        while (next) |node| : (next = node.next) {
+            if (node.data.workspace != workspace) {
+                node.data.hide();
+            } else {
+                node.data.show();
+                if (!focused) node.data.focus();
+                focused = true;
+            }
         }
     }
 

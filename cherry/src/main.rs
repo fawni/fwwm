@@ -73,6 +73,18 @@ enum IPCCommand {
 
     /// Unhide the current window
     Show,
+
+    /// Send the current window to a workspace
+    SendToWorkspace {
+        /// The workspace to send the window to
+        workspace: i64,
+    },
+
+    /// Switch to a workspace
+    SwitchWorkspace {
+        /// The workspace to switch to
+        workspace: i64,
+    },
 }
 
 // sadly #[repr(i64)] doesn't work with non-unit enum variants
@@ -87,6 +99,8 @@ impl From<IPCCommand> for i64 {
             IPCCommand::Fullscreen { .. } => 5,
             IPCCommand::Hide => 6,
             IPCCommand::Show => 7,
+            IPCCommand::SendToWorkspace { .. } => 8,
+            IPCCommand::SwitchWorkspace { .. } => 9,
         }
     }
 }
@@ -131,6 +145,9 @@ unsafe fn send_command(
                 None => 2,
             };
             msg_data.set_long(1, value);
+        }
+        IPCCommand::SendToWorkspace { workspace } | IPCCommand::SwitchWorkspace { workspace } => {
+            msg_data.set_long(1, workspace);
         }
         _ => (),
     }

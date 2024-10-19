@@ -31,17 +31,16 @@ pub const Client = struct {
     screen_height: c_uint,
 
     border_width: u8,
-
     focus_color: u32,
 
-    // decorated: bool,
+    workspace: u32,
+
     // decoration: c.Window,
 
+    // is_decorated: bool,
     is_maximized: bool = false,
     is_fullscreen: bool = false,
     is_hidden: bool = false,
-
-    // workspace: u8,
 
     pub fn map(self: *Self) void {
         _ = c.XMapWindow(self.x_display, self.window);
@@ -74,8 +73,9 @@ pub const Client = struct {
         self.height = height;
     }
 
-    pub fn ewmh_set_state(self: *Self, atom: c.Atom, data: c.Bool) void {
-        _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&atom), data);
+    pub fn send_to_workspace(self: *Self, workspace: u32) void {
+        self.workspace = workspace;
+        self.ewmh_set_workspace(workspace);
     }
 
     // TODO: maybe support `_NET_WM_STATE_MAXIMIZED_HORZ` and `_NET_WM_STATE_MAXIMIZED_VERT`.
@@ -160,10 +160,6 @@ pub const Client = struct {
         self.ewmh_set_active();
     }
 
-    pub fn ewmh_set_active(self: *Self) void {
-        _ = c.XChangeProperty(self.x_display, self.x_root, A.net_active_window, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&self.window), 1);
-    }
-
     pub fn hide(self: *Self) void {
         if (self.is_hidden) return;
 
@@ -190,5 +186,17 @@ pub const Client = struct {
 
     pub fn kill(self: *Self) void {
         _ = c.XKillClient(self.x_display, self.window);
+    }
+
+    pub fn ewmh_set_workspace(self: *Self, workspace: u32) void {
+        _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_desktop, c.XA_CARDINAL, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&workspace), 1);
+    }
+
+    pub fn ewmh_set_state(self: *Self, atom: c.Atom, data: c.Bool) void {
+        _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&atom), data);
+    }
+
+    pub fn ewmh_set_active(self: *Self) void {
+        _ = c.XChangeProperty(self.x_display, self.x_root, A.net_active_window, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&self.window), 1);
     }
 };
