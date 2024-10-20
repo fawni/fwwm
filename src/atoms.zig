@@ -15,6 +15,14 @@ pub var net_wm_desktop: c.Atom = undefined;
 pub var net_wm_state: c.Atom = undefined;
 pub var net_wm_state_fullscreen: c.Atom = undefined;
 pub var net_wm_state_hidden: c.Atom = undefined;
+pub var net_wm_window_type: c.Atom = undefined;
+pub var net_wm_window_type_desktop: c.Atom = undefined;
+pub var net_wm_window_type_dock: c.Atom = undefined;
+pub var net_wm_window_type_toolbar: c.Atom = undefined;
+pub var net_wm_window_type_utility: c.Atom = undefined;
+pub var net_wm_window_type_dialog: c.Atom = undefined;
+pub var net_wm_window_type_menu: c.Atom = undefined;
+pub var net_wm_window_type_notification: c.Atom = undefined;
 
 pub var fwwm_client_event: c.Atom = undefined;
 
@@ -38,6 +46,14 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
     net_wm_state = c.XInternAtom(display, "_NET_WM_STATE", c.False);
     net_wm_state_fullscreen = c.XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", c.False);
     net_wm_state_hidden = c.XInternAtom(display, "_NET_WM_STATE_HIDDEN", c.False);
+    net_wm_window_type = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE", c.False);
+    net_wm_window_type_desktop = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_DESKTOP", c.False);
+    net_wm_window_type_dock = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_DOCK", c.False);
+    net_wm_window_type_toolbar = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_TOOLBAR", c.False);
+    net_wm_window_type_utility = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_UTILITY", c.False);
+    net_wm_window_type_dialog = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", c.False);
+    net_wm_window_type_menu = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_MENU", c.False);
+    net_wm_window_type_notification = c.XInternAtom(display, "_NET_WM_WINDOW_TYPE_NOTIFICATION", c.False);
 
     fwwm_client_event = c.XInternAtom(display, "FWWM_CHERRY_EVENT", c.False);
 
@@ -53,6 +69,14 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
         net_wm_state,
         net_wm_state_fullscreen,
         net_wm_state_hidden,
+        net_wm_window_type,
+        net_number_of_desktops,
+        net_wm_window_type_dock,
+        net_wm_window_type_toolbar,
+        net_wm_window_type_utility,
+        net_wm_window_type_dialog,
+        net_wm_window_type_menu,
+        net_wm_window_type_notification,
     };
 
     _ = c.XChangeProperty(display, check, net_wm_check, c.XA_WINDOW, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&check), 1);

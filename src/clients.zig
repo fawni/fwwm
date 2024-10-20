@@ -51,6 +51,8 @@ pub const Client = struct {
     }
 
     pub fn move(self: *Self, x: c_int, y: c_int) void {
+        if (self.is_fullscreen) return;
+
         _ = c.XMoveWindow(self.x_display, self.window, x, y);
 
         self.x = x;
@@ -58,6 +60,8 @@ pub const Client = struct {
     }
 
     pub fn resize(self: *Self, width: c_uint, height: c_uint) void {
+        if (self.is_fullscreen) return;
+
         _ = c.XResizeWindow(self.x_display, self.window, width, height);
 
         self.width = @intCast(width);
@@ -65,6 +69,8 @@ pub const Client = struct {
     }
 
     pub fn move_resize(self: *Self, x: c_int, y: c_int, width: c_int, height: c_int) void {
+        if (self.is_fullscreen) return;
+
         _ = c.XMoveResizeWindow(self.x_display, self.window, x, y, @intCast(width), @intCast(height));
 
         self.x = x;
@@ -78,7 +84,7 @@ pub const Client = struct {
         self.ewmh_set_workspace(workspace);
     }
 
-    // TODO: maybe support `_NET_WM_STATE_MAXIMIZED_HORZ` and `_NET_WM_STATE_MAXIMIZED_VERT`.
+    // NOTE: maybe support `_NET_WM_STATE_MAXIMIZED_HORZ` and `_NET_WM_STATE_MAXIMIZED_VERT`.
     // dwm does not support it so it should be fine if we don't.
     pub fn maximize(self: *Self, state: ?bool) void {
         if (self.is_fullscreen) return;

@@ -29,8 +29,7 @@ do
     sleep 0.1
 done | \
 
-lemonbar -d \
-         -b \
+lemonbar -b \
          -f "Iosevka Term" \
          -n lemonbar \
          -B "#15151500" \

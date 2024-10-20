@@ -12,6 +12,11 @@ const log = std.log.scoped(.layout);
 const Client = clients.Client;
 const ClientList = clients.ClientList;
 
+var dummy_window: c.Window = undefined;
+var dummy_int: c_int = undefined;
+var dummy_uint: c_uint = undefined;
+var dummy_ulong: c_ulong = undefined;
+
 pub const Layout = struct {
     const Self = @This();
 
@@ -80,7 +85,25 @@ pub const Layout = struct {
     }
 
     pub fn on_map_request(self: *Self, event: *const c.XMapRequestEvent) !void {
-        // log.debug("mapping a window: {}", .{event.window});
+        var attributes: c.XWindowAttributes = undefined;
+        _ = c.XGetWindowAttributes(self.x_display, event.window, &attributes);
+        if (attributes.override_redirect == c.True) return;
+
+        var prop: [*c]u8 = undefined;
+        _ = c.XGetWindowProperty(self.x_display, event.window, A.net_wm_window_type, 0, 1, c.False, c.XA_ATOM, &dummy_ulong, &dummy_int, &dummy_ulong, &dummy_ulong, @alignCast(@ptrCast(&prop)));
+
+        if (prop[0] == A.net_wm_window_type_desktop or
+            prop[0] == A.net_wm_window_type_dock or
+            prop[0] == A.net_wm_window_type_toolbar or
+            prop[0] == A.net_wm_window_type_utility or
+            prop[0] == A.net_wm_window_type_dialog or
+            prop[0] == A.net_wm_window_type_menu or
+            prop[0] == A.net_wm_window_type_notification)
+        {
+            _ = c.XMapWindow(self.x_display, event.window);
+
+            return;
+        }
 
         _ = c.XSelectInput(self.x_display, event.window, M.MAP_WINDOW_MASK);
         _ = c.XMapWindow(self.x_display, event.window);
@@ -97,8 +120,6 @@ pub const Layout = struct {
     }
 
     pub fn on_unmap_notify(self: *Self, event: *const c.XUnmapEvent) void {
-        // log.debug("a window was unmapped: {}", .{event.window});
-
         if (self.node_from_window(event.window)) |node| {
             if (self.focused_client == node) {
                 self.focus(null);
@@ -107,8 +128,6 @@ pub const Layout = struct {
     }
 
     pub fn on_destroy_notify(self: *Self, event: *const c.XDestroyWindowEvent) void {
-        // log.debug("a window was destroyed: {}", .{event.window});
-
         if (self.node_from_window(event.window)) |node| {
             self.clients.remove(node);
 
@@ -119,7 +138,6 @@ pub const Layout = struct {
     }
 
     pub fn on_button_press(self: *Self, event: *c.XButtonPressedEvent) !void {
-        // log.debug("button pressed", .{});
         const window = event.window;
 
         if (self.node_from_window(window)) |node| if (node != self.focused_client) self.focus(node);
@@ -128,9 +146,6 @@ pub const Layout = struct {
         if (self.node_from_window(window)) |node| {
             var pointer_x: c_int = undefined;
             var pointer_y: c_int = undefined;
-            var dummy_window: c.Window = undefined;
-            var dummy_int: c_int = undefined;
-            var dummy_uint: c_uint = undefined;
             _ = c.XQueryPointer(self.x_display, self.x_root, &dummy_window, &dummy_window, &pointer_x, &pointer_y, &dummy_int, &dummy_int, &dummy_uint);
 
             if (event.state & c.Mod4Mask != 0) {

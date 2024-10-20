@@ -4,7 +4,7 @@ super + d
     rofi -show drun
 super + w
     rofi -show window
-super + {q,shift + q}
+super + {q,ctrl + q}
     cherry {close,kill}
 super + f
     cherry fullscreen

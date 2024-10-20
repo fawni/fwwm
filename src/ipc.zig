@@ -5,7 +5,7 @@ const Layout = @import("layout.zig").Layout;
 const ClientList = @import("clients.zig").ClientList;
 const Node = ClientList.Node;
 
-// TODO: order matters so organize accordingly (when we have more commands)
+// TODO: reorder to make more sense
 pub const IPCCommand = enum {
     Close,
     Kill,
