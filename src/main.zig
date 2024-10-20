@@ -7,7 +7,7 @@ pub fn main() !void {
     defer std.debug.assert(gpa.deinit() == .ok);
     var allocator = gpa.allocator();
 
-    var wm: WM = try WM.init(&allocator);
+    var wm = WM.init(&allocator);
     defer wm.deinit();
 
     try wm.run();

@@ -70,7 +70,6 @@ pub fn init(display: *c.Display, root: c.Window) c.Window {
         net_wm_state_fullscreen,
         net_wm_state_hidden,
         net_wm_window_type,
-        net_number_of_desktops,
         net_wm_window_type_dock,
         net_wm_window_type_toolbar,
         net_wm_window_type_utility,

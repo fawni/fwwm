@@ -1,5 +1,5 @@
 super + Return
-    ./dots/tty.sh
+    tty.sh
 super + d
     rofi -show drun
 super + w

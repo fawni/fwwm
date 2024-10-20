@@ -1,26 +1,28 @@
 const std = @import("std");
 const c = @import("c.zig");
-const clients = @import("clients.zig");
 const ipc = @import("ipc.zig");
 
 const A = @import("atoms.zig");
 const C = @import("cursors.zig");
 const M = @import("masks.zig");
 
-const log = std.log.scoped(.layout);
+const log = std.log.scoped(.manager);
 
-const Client = clients.Client;
-const ClientList = clients.ClientList;
+const WM = @import("wm.zig").WM;
+const Client = @import("clients.zig").Client;
+const ClientList = @import("clients.zig").ClientList;
 
 var dummy_window: c.Window = undefined;
 var dummy_int: c_int = undefined;
 var dummy_uint: c_uint = undefined;
 var dummy_ulong: c_ulong = undefined;
 
-pub const Layout = struct {
+pub const Manager = struct {
     const Self = @This();
 
     allocator: *std.mem.Allocator,
+
+    wm: *WM,
 
     x_display: *c.Display,
     x_screen: *c.Screen,
@@ -40,31 +42,33 @@ pub const Layout = struct {
 
     current_workspace: u32,
 
-    pub fn init(allocator: *std.mem.Allocator, display: *c.Display, root: c.Window) !Self {
-        var layout: Self = undefined;
+    pub fn init(wm: *WM) Self {
+        var manager: Self = undefined;
 
-        layout.allocator = allocator;
+        manager.allocator = wm.allocator;
 
-        layout.x_display = display;
-        layout.x_root = root;
+        manager.wm = wm;
 
-        const screen = c.DefaultScreen(layout.x_display);
+        manager.x_display = wm.x_display;
+        manager.x_root = wm.x_root;
 
-        layout.screen_width = @intCast(c.XDisplayWidth(display, screen));
-        layout.screen_height = @intCast(c.XDisplayHeight(display, screen));
+        const screen = c.DefaultScreen(manager.x_display);
 
-        layout.clients = ClientList{};
-        layout.focused_client = null;
+        manager.screen_width = @intCast(c.XDisplayWidth(manager.x_display, screen));
+        manager.screen_height = @intCast(c.XDisplayHeight(manager.x_display, screen));
 
-        layout.normal_color = 0x303030;
-        layout.hover_color = 0x97d0e8;
-        layout.focus_color = 0xd895ee;
+        manager.clients = ClientList{};
+        manager.focused_client = null;
 
-        layout.border_width = 2;
+        manager.normal_color = 0x303030;
+        manager.hover_color = 0x97d0e8;
+        manager.focus_color = 0xd895ee;
 
-        layout.set_current_desktop(0);
+        manager.border_width = 2;
 
-        return layout;
+        manager.set_current_desktop(0);
+
+        return manager;
     }
 
     pub fn on_configure_request(self: *Self, event: *const c.XConfigureRequestEvent) void {
@@ -275,7 +279,7 @@ pub const Layout = struct {
 
         node.data = client;
         self.clients.append(node);
-        try self.ewmh_set_client_list();
+        self.ewmh_set_client_list();
         node.data.send_to_workspace(self.current_workspace);
 
         return node;
@@ -350,7 +354,7 @@ pub const Layout = struct {
         _ = c.XSync(self.x_display, c.False);
     }
 
-    fn ewmh_set_client_list(self: *Self) !void {
+    pub fn ewmh_set_client_list(self: *Self) void {
         _ = c.XDeleteProperty(self.x_display, self.x_root, A.net_client_list);
 
         var next = self.clients.first;
@@ -384,5 +388,10 @@ pub const Layout = struct {
         while (next) |n| : (next = n.next) if (n == node) return true;
 
         return false;
+    }
+
+    pub fn quit(self: *Self) void {
+        self.wm.running = false;
+        self.wm.deinit();
     }
 };

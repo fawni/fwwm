@@ -6,7 +6,7 @@ const C = @import("cursors.zig");
 
 const log = std.log.scoped(.wm);
 
-const Layout = @import("layout.zig").Layout;
+const Manager = @import("manager.zig").Manager;
 
 pub const WM = struct {
     const Self = @This();
@@ -19,9 +19,11 @@ pub const WM = struct {
 
     ewmh_check: c.Window,
 
-    layout: Layout,
+    manager: Manager,
 
-    pub fn init(allocator: *std.mem.Allocator) !Self {
+    running: bool,
+
+    pub fn init(allocator: *std.mem.Allocator) Self {
         var wm: Self = undefined;
 
         wm.allocator = allocator;
@@ -32,7 +34,9 @@ pub const WM = struct {
 
         wm.ewmh_check = A.init(wm.x_display, wm.x_root);
 
-        wm.layout = try Layout.init(wm.allocator, wm.x_display, wm.x_root);
+        wm.manager = Manager.init(&wm);
+
+        wm.running = true;
 
         C.init(wm.x_display);
 
@@ -52,19 +56,19 @@ pub const WM = struct {
 
         _ = c.XSync(self.x_display, c.False);
 
-        while (true) {
+        while (self.running) {
             var event: c.XEvent = undefined;
             _ = c.XNextEvent(self.x_display, &event);
 
             switch (event.type) {
-                c.ConfigureRequest => self.layout.on_configure_request(&event.xconfigurerequest),
-                c.MapRequest => try self.layout.on_map_request(&event.xmaprequest),
-                c.UnmapNotify => self.layout.on_unmap_notify(&event.xunmap),
-                c.DestroyNotify => self.layout.on_destroy_notify(&event.xdestroywindow),
-                c.ButtonPress => try self.layout.on_button_press(&event.xbutton),
-                c.EnterNotify => self.layout.on_enter_notify(&event.xcrossing),
-                c.LeaveNotify => self.layout.on_leave_notify(&event.xcrossing),
-                c.ClientMessage => self.layout.on_client_message(&event.xclient),
+                c.ConfigureRequest => self.manager.on_configure_request(&event.xconfigurerequest),
+                c.MapRequest => try self.manager.on_map_request(&event.xmaprequest),
+                c.UnmapNotify => self.manager.on_unmap_notify(&event.xunmap),
+                c.DestroyNotify => self.manager.on_destroy_notify(&event.xdestroywindow),
+                c.ButtonPress => try self.manager.on_button_press(&event.xbutton),
+                c.EnterNotify => self.manager.on_enter_notify(&event.xcrossing),
+                c.LeaveNotify => self.manager.on_leave_notify(&event.xcrossing),
+                c.ClientMessage => self.manager.on_client_message(&event.xclient),
                 else => {},
             }
         }
@@ -99,7 +103,19 @@ pub const WM = struct {
         return 0;
     }
 
-    pub fn deinit(self: *const Self) void {
+    pub fn deinit(self: *Self) void {
+        var next = self.manager.clients.first;
+        while (next) |node| : (next = node.next) {
+            self.manager.clients.remove(node);
+        }
+        self.manager.ewmh_set_client_list();
+
+        _ = c.XUngrabPointer(self.x_display, c.CurrentTime);
+        _ = c.XUngrabButton(self.x_display, c.AnyButton, c.AnyModifier, self.x_root);
+        _ = c.XUngrabKey(self.x_display, c.AnyKey, c.AnyModifier, self.x_root);
+
+        _ = c.XDeleteProperty(self.x_display, self.x_root, A.net_supported);
+
         _ = c.XCloseDisplay(self.x_display);
     }
 };

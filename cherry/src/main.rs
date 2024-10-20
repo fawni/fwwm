@@ -85,6 +85,9 @@ enum IPCCommand {
         /// The workspace to switch to
         workspace: i64,
     },
+
+    /// Quit fwwm
+    Quit,
 }
 
 // sadly #[repr(i64)] doesn't work with non-unit enum variants
@@ -101,6 +104,7 @@ impl From<IPCCommand> for i64 {
             IPCCommand::Show => 7,
             IPCCommand::SendToWorkspace { .. } => 8,
             IPCCommand::SwitchWorkspace { .. } => 9,
+            IPCCommand::Quit => 10,
         }
     }
 }

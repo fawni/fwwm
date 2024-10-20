@@ -34,7 +34,7 @@ function get_tag() {
 while true
 do
     printf "%s %s%s\n" \
-            "%{l}$(get_tag)" \
+            "%{Sf}%{l}$(get_tag)" \
             "%{c} $(get_date)" \
             "%{B- F-}"
 done | \

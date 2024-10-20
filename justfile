@@ -22,5 +22,5 @@ cherry:
 @dev-cherry: (cherry) (dev)
 
 install: (release) && (cherry)
-    sudo cp ./zig-out/bin/fwwm /usr/bin/fwwm
-    sudo cp ./contrib/fwwm.desktop /usr/share/xsessions/fwwm.desktop
+    sudo cp -u ./zig-out/bin/fwwm /usr/bin/fwwm
+    sudo cp -u ./contrib/fwwm.desktop /usr/share/xsessions/fwwm.desktop
