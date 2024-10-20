@@ -202,7 +202,7 @@ pub const Client = struct {
         _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_desktop, c.XA_CARDINAL, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&workspace), 1);
     }
 
-    pub fn ewmh_set_state(self: *Self, atom: c.Atom, data: c.Bool) void {
+    pub fn ewmh_set_state(self: *Self, atom: ?c.Atom, data: c.Bool) void {
         _ = c.XChangeProperty(self.x_display, self.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, @ptrCast(&atom), data);
     }
 

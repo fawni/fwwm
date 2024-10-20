@@ -19,19 +19,25 @@ pub const IPCCommand = enum {
     SwitchWorkspace,
 };
 
-pub fn handle(node: *Node, data: [5]c_long, layout: *Layout) void {
+pub fn handle(node: ?*Node, data: [5]c_long, layout: *Layout) void {
     switch (data[0]) {
-        @intFromEnum(IPCCommand.Close) => close(node),
-        @intFromEnum(IPCCommand.Kill) => kill(node),
-        @intFromEnum(IPCCommand.Move) => move(node, data[1], data[2]),
-        @intFromEnum(IPCCommand.Resize) => resize(node, data[1], data[2]),
-        @intFromEnum(IPCCommand.Maximize) => maximize(node, data[1]),
-        @intFromEnum(IPCCommand.Fullscreen) => fullscreen(node, data[1]),
-        @intFromEnum(IPCCommand.Hide) => hide(node),
-        @intFromEnum(IPCCommand.Show) => show(node),
-        @intFromEnum(IPCCommand.SendToWorkspace) => send_to_workspace(node, data[1], layout),
         @intFromEnum(IPCCommand.SwitchWorkspace) => switch_workspace(data[1], layout),
         else => {},
+    }
+
+    if (node) |n| {
+        switch (data[0]) {
+            @intFromEnum(IPCCommand.Close) => close(n),
+            @intFromEnum(IPCCommand.Kill) => kill(n),
+            @intFromEnum(IPCCommand.Move) => move(n, data[1], data[2]),
+            @intFromEnum(IPCCommand.Resize) => resize(n, data[1], data[2]),
+            @intFromEnum(IPCCommand.Maximize) => maximize(n, data[1]),
+            @intFromEnum(IPCCommand.Fullscreen) => fullscreen(n, data[1]),
+            @intFromEnum(IPCCommand.Hide) => hide(n),
+            @intFromEnum(IPCCommand.Show) => show(n),
+            @intFromEnum(IPCCommand.SendToWorkspace) => send_to_workspace(n, data[1], layout),
+            else => {},
+        }
     }
 }
 

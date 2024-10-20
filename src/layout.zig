@@ -111,11 +111,9 @@ pub const Layout = struct {
         _ = c.XGrabButton(self.x_display, c.Button1, c.AnyModifier, event.window, c.True, M.POINTER_MASK, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
         _ = c.XGrabButton(self.x_display, c.Button3, c.AnyModifier, event.window, c.True, M.POINTER_MASK, c.GrabModeSync, c.GrabModeAsync, c.None, c.None);
 
-        _ = c.XSetWindowBorderWidth(self.x_display, event.window, self.border_width);
-
-        _ = c.XChangeProperty(self.x_display, event.window, A.net_wm_state, c.XA_ATOM, c.XA_VISUALID, c.PropModeReplace, null, c.False);
-
         const node = try self.add_client(event.window);
+        node.data.set_border_width(self.border_width);
+        node.data.ewmh_set_state(null, c.False);
         self.focus(node);
     }
 
@@ -237,7 +235,7 @@ pub const Layout = struct {
         const data = event.data.l;
         if (event.message_type == A.fwwm_client_event) {
             if (self.node_from_window(@intCast(data[4]))) |node| return ipc.handle(node, data, self);
-            if (self.focused_client) |node| ipc.handle(node, data, self);
+            ipc.handle(self.focused_client, data, self);
         } else if (event.message_type == A.net_wm_state) {
             const node = self.node_from_window(event.window) orelse return;
 
