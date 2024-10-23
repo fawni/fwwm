@@ -25,7 +25,6 @@ pub const Manager = struct {
     wm: *WM,
 
     x_display: *c.Display,
-    x_screen: *c.Screen,
     x_root: c.Window,
 
     screen_width: c_uint,
@@ -334,8 +333,10 @@ pub const Manager = struct {
                 node.data.hide();
             } else {
                 node.data.show();
-                if (!focused) node.data.focus();
-                focused = true;
+                if (!focused) {
+                    node.data.focus();
+                    focused = true;
+                }
             }
         }
     }

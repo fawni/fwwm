@@ -14,7 +14,6 @@ pub const WM = struct {
     allocator: *std.mem.Allocator,
 
     x_display: *c.Display,
-    x_screen: *c.Screen,
     x_root: c.Window,
 
     ewmh_check: c.Window,
@@ -29,7 +28,6 @@ pub const WM = struct {
         wm.allocator = allocator;
 
         wm.x_display = c.XOpenDisplay(null) orelse std.process.exit(1);
-        wm.x_screen = c.XDefaultScreenOfDisplay(wm.x_display);
         wm.x_root = c.XDefaultRootWindow(wm.x_display);
 
         wm.ewmh_check = A.init(wm.x_display, wm.x_root);
