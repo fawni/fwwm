@@ -3,8 +3,8 @@ const c = @import("c.zig");
 const ipc = @import("ipc.zig");
 
 const A = @import("atoms.zig");
-const C = @import("cursors.zig");
 const M = @import("masks.zig");
+const cursors = @import("cursors.zig");
 
 const log = std.log.scoped(.manager);
 
@@ -342,7 +342,7 @@ pub const Manager = struct {
     }
 
     fn grab_pointer(self: *Self) void {
-        _ = c.XGrabPointer(self.x_display, self.x_root, c.False, M.POINTER_MASK, c.GrabModeAsync, c.GrabModeAsync, c.None, C.move, c.CurrentTime);
+        _ = c.XGrabPointer(self.x_display, self.x_root, c.False, M.POINTER_MASK, c.GrabModeAsync, c.GrabModeAsync, c.None, cursors.move, c.CurrentTime);
     }
 
     fn ungrab_pointer(self: *Self) void {

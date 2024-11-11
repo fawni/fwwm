@@ -2,7 +2,7 @@ const std = @import("std");
 const c = @import("c.zig");
 
 const A = @import("atoms.zig");
-const C = @import("cursors.zig");
+const cursors = @import("cursors.zig");
 
 const log = std.log.scoped(.wm);
 
@@ -36,7 +36,7 @@ pub const WM = struct {
 
         wm.running = true;
 
-        C.init(wm.x_display);
+        cursors.init(wm.x_display);
 
         return wm;
     }
@@ -50,7 +50,7 @@ pub const WM = struct {
             c.SubstructureNotifyMask |
             c.ButtonPressMask |
             c.PointerMotionMask);
-        _ = c.XDefineCursor(self.x_display, self.x_root, C.normal);
+        _ = c.XDefineCursor(self.x_display, self.x_root, cursors.normal);
 
         _ = c.XSync(self.x_display, c.False);
 
