@@ -95,17 +95,19 @@ pub const Manager = struct {
         var prop: [*c]u8 = undefined;
         _ = c.XGetWindowProperty(self.x_display, event.window, A.net_wm_window_type, 0, 1, c.False, c.XA_ATOM, &dummy_ulong, &dummy_int, &dummy_ulong, &dummy_ulong, @alignCast(@ptrCast(&prop)));
 
-        if (prop[0] == A.net_wm_window_type_desktop or
-            prop[0] == A.net_wm_window_type_dock or
-            prop[0] == A.net_wm_window_type_toolbar or
-            prop[0] == A.net_wm_window_type_utility or
-            prop[0] == A.net_wm_window_type_dialog or
-            prop[0] == A.net_wm_window_type_menu or
-            prop[0] == A.net_wm_window_type_notification)
-        {
-            _ = c.XMapWindow(self.x_display, event.window);
+        if (prop) |p| {
+            if (p[0] == A.net_wm_window_type_desktop or
+                p[0] == A.net_wm_window_type_dock or
+                p[0] == A.net_wm_window_type_toolbar or
+                p[0] == A.net_wm_window_type_utility or
+                p[0] == A.net_wm_window_type_dialog or
+                p[0] == A.net_wm_window_type_menu or
+                p[0] == A.net_wm_window_type_notification)
+            {
+                _ = c.XMapWindow(self.x_display, event.window);
 
-            return;
+                return;
+            }
         }
 
         _ = c.XSelectInput(self.x_display, event.window, M.MAP_WINDOW_MASK);
